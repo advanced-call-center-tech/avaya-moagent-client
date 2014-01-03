@@ -88,7 +88,7 @@ namespace AvayaMoagentClient
 
     public bool Connected
     {
-      get { return (_sslWrapper != null && _client != null && _client.Connected); }
+      get { return ((!_useSsl || _sslWrapper != null) && _client != null && _client.Connected); }
     }
 
     public void StartConnectAsync()
