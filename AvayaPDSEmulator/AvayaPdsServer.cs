@@ -269,19 +269,6 @@ namespace AvayaPDSEmulator
       }
     }
 
-    private static Message CreateMessage(string command, Message.MessageType type, List<string> contents)
-    {
-      return new Message
-                  {
-                    Command = command,
-                    Type = type,
-                    OrigId = "Agent server",
-                    ProcessId = "25538",
-                    InvokeId = "0",
-                    Contents = contents
-                  };
-    }
-
     private static void _HandleMessage(StateObject state, string data)
     {
       var handler = state.WorkSocket;
@@ -898,26 +885,6 @@ namespace AvayaPDSEmulator
       writer.Write(rawMsg);
       writer.Flush();
       Thread.Sleep(50);
-    }
-
-    private static void SendCallback(IAsyncResult ar)
-    {
-      try
-      {
-        // Retrieve the socket from the state object.
-        var handler = (Socket)ar.AsyncState;
-
-        // Complete sending the data to the remote device.
-        var bytesSent = handler.EndSend(ar);
-        Console.WriteLine("Sent {0} bytes to client.", bytesSent);
-
-        handler.Shutdown(SocketShutdown.Both);
-        handler.Close();
-      }
-      catch (Exception e)
-      {
-        Console.WriteLine(e.ToString());
-      }
     }
   }
 }
