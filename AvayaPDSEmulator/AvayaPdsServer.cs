@@ -51,11 +51,31 @@ namespace AvayaPDSEmulator
   {
     private const int _PORT_NUMBER = 22700;
     private const int _BACKLOG = 100;
-    private static ManualResetEvent _allDone = new ManualResetEvent(false);
+    private ManualResetEvent _allDone = new ManualResetEvent(false);
+    private Thread _listenThread = null;
     
-    public static Dictionary<Guid, StateObject> States = new Dictionary<Guid, StateObject>();
+    public Dictionary<Guid, StateObject> States = new Dictionary<Guid, StateObject>();
 
     public void StartListening()
+    {
+      if (_listenThread == null)
+      {
+        _listenThread = new Thread(new ThreadStart(_Listen));
+        _listenThread.IsBackground = true;
+        _listenThread.Start();
+      }
+    }
+
+    public void StopListening()
+    {
+      if (_listenThread != null)
+      {
+        _listenThread.Abort();
+        _listenThread = null;
+      }
+    }
+
+    private void _Listen()
     {
       //Create TCP/IP socket
       var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -78,13 +98,17 @@ namespace AvayaPDSEmulator
         }
 
       }
+      catch (ThreadAbortException)
+      {
+        //Ignore it
+      }
       catch (Exception e)
       {
         Logging.LogEvent("Error listening for incoming connection: " + e.ToString());
       }
     }
 
-    private static void _AcceptClientConnection(IAsyncResult ar)
+    private void _AcceptClientConnection(IAsyncResult ar)
     {
       //Signal the main thread to continue
       _allDone.Set();
@@ -114,7 +138,7 @@ namespace AvayaPDSEmulator
       _BeginReceiveFromClient(state);
     }
 
-    private static void _BeginReceiveFromClient(StateObject state)
+    private void _BeginReceiveFromClient(StateObject state)
     {
       if (!state.IsDisconnecting)
       {
@@ -127,7 +151,7 @@ namespace AvayaPDSEmulator
       }
     }
 
-    private static void _ReceiveFromClient(IAsyncResult ar)
+    private void _ReceiveFromClient(IAsyncResult ar)
     {
       string content;
 
@@ -210,7 +234,7 @@ namespace AvayaPDSEmulator
       }
     }
 
-    private static void _HandleClientMessages(StateObject state, IEnumerable<string> data)
+    private void _HandleClientMessages(StateObject state, IEnumerable<string> data)
     {
       foreach (var msg in data)
       {
@@ -280,7 +304,7 @@ namespace AvayaPDSEmulator
       _BeginReceiveFromClient(state);
     }
 
-    private static void _HandleMessageFromClient(StateObject state, string data)
+    private void _HandleMessageFromClient(StateObject state, string data)
     {
       var handler = state.WorkSocket;
       Logging.LogEvent(string.Format("Receiving message ({0}): {1}", DateTime.Now, data));
@@ -456,29 +480,6 @@ namespace AvayaPDSEmulator
               ProcessId = "26621",
               InvokeId = "0",
               Contents = new List<string> { "M00001", "GEO_HM2" }
-            });
-          _SendMessageToClient(handler,
-            new Message
-            {
-              Command = "AGTJobTransLink",
-              Type = Message.MessageType.Notification,
-              OrigId = "Agent server",
-              ProcessId = "26621",
-              InvokeId = "0",
-              Contents = new List<string> { "M00000" }
-            });
-          break;
-
-        case "BTRANS":
-          _SendMessageToClient(handler,
-            new Message
-            {
-              Command = "AGTJobTransLink",
-              Type = Message.MessageType.Notification,
-              OrigId = "Agent server",
-              ProcessId = "26621",
-              InvokeId = "0",
-              Contents = new List<string> { "M00001", "GEO_HM3" }
             });
           _SendMessageToClient(handler,
             new Message
@@ -915,7 +916,7 @@ namespace AvayaPDSEmulator
       }
     }
 
-    private static void _SendMessageToClient(Socket sock, Message msg)
+    private void _SendMessageToClient(Socket sock, Message msg)
     {
       var writer = new StreamWriter(new NetworkStream(sock, true));
       var raw = msg.RawMessage;
@@ -926,7 +927,7 @@ namespace AvayaPDSEmulator
       Thread.Sleep(50);
     }
 
-    private static void _Disconnect(StateObject state)
+    private void _Disconnect(StateObject state)
     {
       if (state != null)
       {

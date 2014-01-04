@@ -293,13 +293,13 @@ namespace AvayaMoagentClient
             handler.BeginRead(state.Buffer, 0, StateObject.BufferSize, SecureReceiveCallback, state);
         }
       }
-      catch (IOException e)
+      catch (IOException)
       {
         //something in the transport leyer has failed, such as the network connection died
         //TODO: log the exception details?
         Disconnect();
       }
-      catch (ObjectDisposedException e)
+      catch (ObjectDisposedException)
       {
         //we've been disconnected
         //TODO: log the exception details?
