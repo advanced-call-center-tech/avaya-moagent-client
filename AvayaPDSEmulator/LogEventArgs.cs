@@ -21,28 +21,22 @@
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
-using System.Collections;
-using System.IO;
-using System.Net;
-using System.Net.Sockets;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
-using System.Threading;
 
 namespace AvayaPDSEmulator
 {
-  class Startup
+  /// <summary>
+  /// LogEventArgs
+  /// </summary>
+  public class LogEventArgs : EventArgs
   {
-    static void Main()
-    {
-      AvayaPDSEmulator.Logging.EventLogged += Logging_EventLogged;
+    public string Message { get; set; }
 
-      var s = new AvayaPdsServer();
-      s.StartListening();
-    }
-
-    static void Logging_EventLogged(object sender, AvayaPDSEmulator.LogEventArgs e)
+    public LogEventArgs(string message)
     {
-      Console.WriteLine(e.Message);
+      Message = message;
     }
   }
 }

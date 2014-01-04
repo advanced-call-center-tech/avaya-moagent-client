@@ -32,255 +32,266 @@ using AvayaMoagentClient;
 
 namespace AvayaPDSEmulator
 {
-  // State object for reading client data asynchronously
+  //State object for reading client data asynchronously
   public class StateObject
   {
+    public const int READ_BUFFER_SIZE = 1024;
+
     public Guid Id = Guid.NewGuid();
     public Socket WorkSocket;
-    public const int BufferSize = 1024;
-    public byte[] Buffer = new byte[BufferSize];
-    public StringBuilder sb = new StringBuilder();
-    public string CurrentState = "S70004";
+    public byte[] Buffer = new byte[READ_BUFFER_SIZE];
+    public StringBuilder Message = new StringBuilder();
+    public string CurrentState = "S70004"; //logged on, idle, not attached to job
     public string CurrentJob = string.Empty;
-    public bool LeaveJob;
-    public bool Disconnect;
+    public bool IsLeavingJob;
+    public bool IsDisconnecting;
   }
 
   public class AvayaPdsServer
   {
-    // Thread signal.
-    public static ManualResetEvent AllDone = new ManualResetEvent(false);
+    private const int _PORT_NUMBER = 22700;
+    private const int _BACKLOG = 100;
+    private static ManualResetEvent _allDone = new ManualResetEvent(false);
+    
     public static Dictionary<Guid, StateObject> States = new Dictionary<Guid, StateObject>();
 
     public void StartListening()
     {
-      var localEndPoint = new IPEndPoint(IPAddress.Any, 22700);
-
-      // Create a TCP/IP socket.
+      //Create TCP/IP socket
       var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-      // Bind the socket to the local endpoint and listen for incoming connections.
       try
       {
-        listener.Bind(localEndPoint);
-        listener.Listen(100);
+        //Bind the socket to the local endpoint and listen for incoming connections
+        listener.Bind(new IPEndPoint(IPAddress.Any, _PORT_NUMBER));
+        listener.Listen(_BACKLOG);
 
         while (true)
         {
-          // Set the event to nonsignaled state.
-          AllDone.Reset();
+          _allDone.Reset();
 
-          // Start an asynchronous socket to listen for connections.
-          Console.WriteLine("Waiting for a connection...");
-          listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);
+          Logging.LogEvent("Waiting for a connection...");
+          listener.BeginAccept(new AsyncCallback(_AcceptClientConnection), listener);
 
-          // Wait until a connection is made before continuing.
-          AllDone.WaitOne();
+          //Wait until a connection is made before continuing
+          _allDone.WaitOne();
         }
 
       }
       catch (Exception e)
       {
-        Console.WriteLine(e.ToString());
+        Logging.LogEvent("Error listening for incoming connection: " + e.ToString());
       }
-
-      Console.WriteLine("\nPress ENTER to continue...");
-      Console.Read();
     }
 
-    public static void AcceptCallback(IAsyncResult ar)
+    private static void _AcceptClientConnection(IAsyncResult ar)
     {
-      // Signal the main thread to continue.
-      AllDone.Set();
+      //Signal the main thread to continue
+      _allDone.Set();
 
-      // Get the socket that handles the client request.
+      //Get the socket for the client request
       var listener = (Socket)ar.AsyncState;
       var handler = listener.EndAccept(ar);
 
-      // Create the state object.
+      //Create the state object
       var state = new StateObject { WorkSocket = handler };
-
       States.Add(state.Id, state);
-      var startMsg = new Message
-                          {
-                            Command = "AGTSTART",
-                            Type = Message.MessageType.Notification,
-                            OrigId = "Agent server",
-                            ProcessId = "26621",
-                            InvokeId = "0",
-                            Contents = new List<string> { "AGENT_STARTUP" }
-                          };
-      Send(state, new List<string> { startMsg.RawMessage });
+      Logging.LogEvent(string.Format("New connection accepted, state ID '{0}'", state.Id));
+
+      //Send the initial message
+      _SendMessageToClient(handler,
+                    new Message
+                    {
+                      Command = "AGTSTART",
+                      Type = Message.MessageType.Notification,
+                      OrigId = "Agent server",
+                      ProcessId = "26621",
+                      InvokeId = "0",
+                      Contents = new List<string> { "AGENT_STARTUP" }
+                    });
+
+      //Start receiving from the client
+      _BeginReceiveFromClient(state);
     }
 
-    public static void ReadCallback(IAsyncResult ar)
+    private static void _BeginReceiveFromClient(StateObject state)
+    {
+      if (!state.IsDisconnecting)
+      {
+        state.WorkSocket.BeginReceive(state.Buffer, 0, StateObject.READ_BUFFER_SIZE, 0,
+          new AsyncCallback(_ReceiveFromClient), state);
+      }
+      else
+      {
+        _Disconnect(state);
+      }
+    }
+
+    private static void _ReceiveFromClient(IAsyncResult ar)
     {
       string content;
 
       try
       {
-        // Retrieve the state object and the handler socket
-        // from the asynchronous state object.
+        //Retrieve the state object and the handler socket
+        //  from the asynchronous state object
         var state = (StateObject)ar.AsyncState;
         var handler = state.WorkSocket;
 
-        // Read data from the client socket. 
+        //Read data from the client socket
         var bytesRead = handler.EndReceive(ar);
-
         if (bytesRead > 0)
         {
-          // There  might be more data, so store the data received so far.
-          state.sb.Append(Encoding.ASCII.GetString(state.Buffer, 0, bytesRead));
+          // There might be more data, so store the data received so far
+          state.Message.Append(Encoding.ASCII.GetString(state.Buffer, 0, bytesRead));
 
-          // Check for end-of-file tag. If it is not there, read 
-          // more data.
-          content = state.sb.ToString();
+          //Check for end-of-file tag; if not there, read more data
+          content = state.Message.ToString();
           if (content.IndexOf((char)3) > -1)
           {
-            var msgs = new List<string>();
-            var msg = new StringBuilder();
+            var messages = new List<string>();
+            var message = new StringBuilder();
 
             foreach (var ch in content)
             {
-              if (ch != (char)3)
-                msg.Append(ch);
+              if (ch == (char)3)
+              {
+                message.Append(ch);
+                messages.Add(message.ToString());
+                message.Length = 0;
+              }
               else
               {
-                msg.Append(ch);
-                msgs.Add(msg.ToString());
-                msg.Length = 0;
+                message.Append(ch);
               }
             }
 
-            state.sb.Length = 0;
-            if (msg.ToString().IndexOf((char)3) > -1)
-              state.sb.Append(msg.ToString());
+            state.Message.Length = 0;
+            if (message.ToString().IndexOf((char)3) > -1)
+            {
+              state.Message.Append(message.ToString());
+            }
 
-            Send(state, msgs);
+            _HandleClientMessages(state, messages);
           }
           else
           {
-            // Not all data received. Get more.
-            handler.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReadCallback), state);
+            //Not all data received, so get more
+            handler.BeginReceive(state.Buffer, 0, StateObject.READ_BUFFER_SIZE, 0,
+              new AsyncCallback(_ReceiveFromClient), state);
           }
         }
       }
-      catch (SocketException)
+      catch (SocketException ex)
       {
-        Disconnect((StateObject)ar.AsyncState);
+        Logging.LogEvent("Socket error receiving data from client: " + ex.ToString());
+
+        _Disconnect((StateObject)ar.AsyncState);
       }
-      catch (IOException)
+      catch (IOException ex)
       {
-        //something in the transport leyer has failed, such as the network connection died
-        //TODO: log the exception details?
-        Disconnect((StateObject)ar.AsyncState);
+        //Something in the transport layer has failed, such as the network connection died
+        Logging.LogEvent("I/O error receiving data from client: " + ex.ToString());
+
+        _Disconnect((StateObject)ar.AsyncState);
       }
-      catch (ObjectDisposedException)
+      catch (ObjectDisposedException ex)
       {
-        //we've been disconnected
-        //TODO: log the exception details?
-        Disconnect((StateObject)ar.AsyncState);
+        //We've been disconnected
+        Logging.LogEvent("Error receiving data from client: " + ex.ToString());
+
+        _Disconnect((StateObject)ar.AsyncState);
       }
-      catch (Exception)
+      catch (Exception ex)
       {
+        Logging.LogEvent("Unexpected error receiving data from client: " + ex.ToString());
+
         Debugger.Break();
       }
     }
 
-    private static void Disconnect(StateObject state)
-    {
-      if (state != null)
-      {
-        if (States.ContainsKey(state.Id))
-          States.Remove(state.Id);
-
-        if (state.WorkSocket != null && state.WorkSocket.Connected)
-        {
-          state.WorkSocket.Close(2);
-        }
-      }
-    }
-
-    private static void Send(StateObject state, IEnumerable<string> data)
+    private static void _HandleClientMessages(StateObject state, IEnumerable<string> data)
     {
       foreach (var msg in data)
       {
-        if (msg.Contains("IPOP"))
+        if (msg.StartsWith("IPOP"))
         {
+          //Blast the handling of this command as though it came from everyone
           foreach (var conn in States.Values)
           {
             if (conn.Id != state.Id && (conn.CurrentState == "S70001" || conn.CurrentState == "S70000"))
             {
-              _HandleMessage(conn, "IPOP".PadRight(20, ' ').PadRight(55, '0'));
+              _HandleMessageFromClient(conn, "IPOP".PadRight(20, ' ').PadRight(55, '0'));
             }
           }
         }
-        else if (msg.Contains("POP"))
+        else if (msg.StartsWith("POP"))
         {
+          //Blast the handling of this command as though it came from everyone
           foreach (var conn in States.Values)
           {
             if (conn.Id != state.Id && (conn.CurrentState == "S70001" || conn.CurrentState == "S70000"))
             {
-              _HandleMessage(conn, "POP".PadRight(20, ' ').PadRight(55, '0'));
+              _HandleMessageFromClient(conn, "POP".PadRight(20, ' ').PadRight(55, '0'));
             }
           }
         }
-        else if (msg.Contains("MAN"))
+        else if (msg.StartsWith("MAN"))
         {
+          //Blast the handling of this command as though it came from everyone
           foreach (var conn in States.Values)
           {
             if (conn.Id != state.Id && (conn.CurrentState == "S70001" || conn.CurrentState == "S70000"))
             {
-              _HandleMessage(conn, "MAN".PadRight(20, ' ').PadRight(55, '0'));
+              _HandleMessageFromClient(conn, "MAN".PadRight(20, ' ').PadRight(55, '0'));
             }
           }
         }
-        else if (msg.Contains("BTRANS"))
+        else if (msg.StartsWith("BTRANS"))
         {
+          //Blast the handling of this command as though it came from everyone
           foreach (var conn in States.Values)
           {
             if (conn.Id != state.Id && (conn.CurrentState == "S70001" || conn.CurrentState == "S70000"))
             {
-              _HandleMessage(conn, "BTRANS".PadRight(20, ' ').PadRight(55, '0'));
+              _HandleMessageFromClient(conn, "BTRANS".PadRight(20, ' ').PadRight(55, '0'));
             }
           }
         }
-        else if (msg.Contains("TRANS"))
+        else if (msg.StartsWith("TRANS"))
         {
+          //Blast the handling of this command as though it came from everyone
           foreach (var conn in States.Values)
           {
             if (conn.Id != state.Id && (conn.CurrentState == "S70001" || conn.CurrentState == "S70000"))
             {
-              _HandleMessage(conn, "TRANS".PadRight(20, ' ').PadRight(55, '0'));
+              _HandleMessageFromClient(conn, "TRANS".PadRight(20, ' ').PadRight(55, '0'));
             }
           }
         }
         else
         {
-          _HandleMessage(state, msg);
+          //Not a special case, so just handle it
+          _HandleMessageFromClient(state, msg);
         }
       }
 
-      if (!state.Disconnect)
-        state.WorkSocket.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReadCallback), state);
-      else
-      {
-        Disconnect(state);
-      }
+      //Prepare to receive the next message
+      _BeginReceiveFromClient(state);
     }
 
-    private static void _HandleMessage(StateObject state, string data)
+    private static void _HandleMessageFromClient(StateObject state, string data)
     {
       var handler = state.WorkSocket;
-      Console.WriteLine("Rcvd ({0}):" + data, DateTime.Now);
+      Logging.LogEvent(string.Format("Receiving message ({0}): {1}", DateTime.Now, data));
 
       var m = Message.ParseMessage(data);
-
       switch (m.Command.Trim())
       {
         case "POP":
           state.CurrentState = "S70000";
-          _WriteMessage(handler,
+
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTCallNotify",
@@ -290,7 +301,7 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { "M00001", "Home Phone - 479-273-7762", "OUTBOUND", "CUSTID,100" }
                           });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTCallNotify",
@@ -311,7 +322,7 @@ namespace AvayaPDSEmulator
                                   "CURPHONE,01"
                                 }
                           });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTCallNotify",
@@ -322,9 +333,11 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "MAN":
           state.CurrentState = "S70000";
-          _WriteMessage(handler,
+
+          _SendMessageToClient(handler,
                         new Message
                         {
                           Command = "AGTPreviewRecord",
@@ -334,7 +347,7 @@ namespace AvayaPDSEmulator
                           InvokeId = "0",
                           Contents = new List<string> { "M00001", "Home Phone - 423-555-5555 (Preview)", "MANAGED", "ACTID,100" }
                         });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                         {
                           Command = "AGTPreviewRecord",
@@ -360,7 +373,7 @@ namespace AvayaPDSEmulator
                                   "STRATEGY_ID,"
                                 }
                         });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                         {
                           Command = "AGTPreviewRecord",
@@ -372,7 +385,8 @@ namespace AvayaPDSEmulator
                         });
 
           Thread.Sleep(5000);
-          _WriteMessage(handler,
+
+          _SendMessageToClient(handler,
                         new Message
                         {
                           Command = "AGTManagedCall",
@@ -382,8 +396,10 @@ namespace AvayaPDSEmulator
                           InvokeId = "0",
                           Contents = new List<string> { "S28833" }
                         });
+
           Thread.Sleep(7000);
-          _WriteMessage(handler,
+
+          _SendMessageToClient(handler,
                         new Message
                         {
                           Command = "AGTManagedCall",
@@ -393,7 +409,7 @@ namespace AvayaPDSEmulator
                           InvokeId = "0",
                           Contents = new List<string> { "M00001","(CONNECT)" }
                         });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
               new Message
               {
                 Command = "AGTManagedCall",
@@ -404,9 +420,11 @@ namespace AvayaPDSEmulator
                 Contents = new List<string> { "M00000" }
               });
           break;
+
         case "IPOP":
           state.CurrentState = "S70000";
-          _WriteMessage(handler,
+
+          _SendMessageToClient(handler,
                         new Message
                         {
                           Command = "AGTCallNotify",
@@ -416,7 +434,7 @@ namespace AvayaPDSEmulator
                           InvokeId = "0",
                           Contents = new List<string> { "M00001", "INBOUND CALL * 11-20 SECS. WAITING", "INBOUND" }
                         });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                         {
                           Command = "AGTCallNotify",
@@ -427,8 +445,9 @@ namespace AvayaPDSEmulator
                           Contents = new List<string> { "M00000" }
                         });
           break;
+
         case "TRANS":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
             new Message
             {
               Command = "AGTJobTransLink",
@@ -438,7 +457,7 @@ namespace AvayaPDSEmulator
               InvokeId = "0",
               Contents = new List<string> { "M00001", "GEO_HM2" }
             });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
             new Message
             {
               Command = "AGTJobTransLink",
@@ -449,8 +468,9 @@ namespace AvayaPDSEmulator
               Contents = new List<string> { "M00000" }
             });
           break;
+
         case "BTRANS":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
             new Message
             {
               Command = "AGTJobTransLink",
@@ -460,7 +480,7 @@ namespace AvayaPDSEmulator
               InvokeId = "0",
               Contents = new List<string> { "M00001", "GEO_HM3" }
             });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
             new Message
             {
               Command = "AGTJobTransLink",
@@ -471,20 +491,9 @@ namespace AvayaPDSEmulator
               Contents = new List<string> { "M00000" }
             });
           break;
-        case "AGTSTART":
-          _WriteMessage(handler,
-                        new Message
-                        {
-                          Command = "AGTSTART",
-                          Type = Message.MessageType.Notification,
-                          OrigId = "Agent server",
-                          ProcessId = "26621",
-                          InvokeId = "0",
-                          Contents = new List<string> { "AGENT_STARTUP" }
-                        });
-          break;
+
         case "AGTLogon":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTLogon",
@@ -494,7 +503,7 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { "S28833" }
                           });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTLogon",
@@ -505,8 +514,9 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTReserveHeadset":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTReserveHeadset",
@@ -516,8 +526,10 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { "S28833" }
                           });
+
           Thread.Sleep(500);
-          _WriteMessage(handler,
+
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTReserveHeadset",
@@ -528,8 +540,9 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTConnHeadset":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTConnHeadset",
@@ -539,8 +552,10 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { "S28833" }
                           });
+
           Thread.Sleep(500);
-          _WriteMessage(handler,
+
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTConnHeadset",
@@ -551,16 +566,17 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTListState":
           string content;
 
-          // If on a job, add the job name to the message
+          //If on a job, add the job name to the message
           if (state.CurrentState != "S70004")
             content = state.CurrentState + "," + state.CurrentJob;
           else
             content = state.CurrentState;
 
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTListState",
@@ -570,7 +586,7 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { content }
                           });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTListState",
@@ -581,8 +597,9 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTSetWorkClass":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTSetWorkClass",
@@ -593,10 +610,12 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTAttachJob":
           state.CurrentState = "S70003";
           state.CurrentJob = m.Contents[0];
-          _WriteMessage(handler,
+
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTAttachJob",
@@ -607,8 +626,9 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTSetNotifyKeyField":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTSetNotifyKeyField",
@@ -619,8 +639,9 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTSetDataField":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTSetDataField",
@@ -631,9 +652,11 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTAvailWork":
           state.CurrentState = "S70002";
-          _WriteMessage(handler,
+
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTAvailWork",
@@ -643,7 +666,7 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { "S28833" }
                           });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTAvailWork",
@@ -654,8 +677,9 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTTransferCall":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                         {
                           Command = "AGTTransferCall",
@@ -666,8 +690,9 @@ namespace AvayaPDSEmulator
                           Contents = new List<string> { "M00000" }
                         });
           break;
+
         case "AGTReleaseLine":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTReleaseLine",
@@ -677,7 +702,7 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { "S28833" }
                           });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTReleaseLine",
@@ -688,10 +713,11 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTReadyNextItem":
           if (state.CurrentState == "S70004")
           {
-            _WriteMessage(handler,
+            _SendMessageToClient(handler,
                           new Message
                             {
                               Command = "AGTReadyNextItem",
@@ -706,7 +732,8 @@ namespace AvayaPDSEmulator
           else
           {
             state.CurrentState = "S70001";
-            _WriteMessage(handler,
+
+            _SendMessageToClient(handler,
                           new Message
                             {
                               Command = "AGTReadyNextItem",
@@ -718,9 +745,11 @@ namespace AvayaPDSEmulator
                             });
           }
           break;
+
         case "AGTFinishedItem":
           state.CurrentState = "S70002";
-          _WriteMessage(handler,
+
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTFinishedItem",
@@ -730,7 +759,7 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { "S28833" }
                           });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTFinishedItem",
@@ -740,10 +769,12 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { "M00000" }
                           });
-          if (state.LeaveJob)
+
+          if (state.IsLeavingJob)
           {
             state.CurrentState = "S70003";
-            _WriteMessage(handler,
+
+            _SendMessageToClient(handler,
                           new Message
                             {
                               Command = "AGTNoFurtherWork",
@@ -755,8 +786,9 @@ namespace AvayaPDSEmulator
                             });
           }
           break;
+
         case "AGTNoFurtherWork":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTNoFurtherWork",
@@ -766,10 +798,12 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { "S28833" }
                           });
+
           if (state.CurrentState != "S70000")
           {
             state.CurrentState = "S70003";
-            _WriteMessage(handler,
+
+            _SendMessageToClient(handler,
                           new Message
                             {
                               Command = "AGTNoFurtherWork",
@@ -782,14 +816,16 @@ namespace AvayaPDSEmulator
           }
           else
           {
-            state.LeaveJob = true;
+            state.IsLeavingJob = true;
           }
           break;
+
         case "AGTDetachJob":
           state.CurrentState = "S70004";
           state.CurrentJob = string.Empty;
+          state.IsLeavingJob = false;
 
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTDetachJob",
@@ -799,11 +835,10 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { "M00000" }
                           });
-          state.LeaveJob = false;
 
           break;
         case "AGTDisconnHeadset":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTDisconnHeadset",
@@ -813,7 +848,7 @@ namespace AvayaPDSEmulator
                             InvokeId = "0",
                             Contents = new List<string> { "S28833" }
                           });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTDisconnHeadset",
@@ -824,8 +859,9 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTFreeHeadset":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                         {
                           Command = "AGTFreeHeadset",
@@ -836,8 +872,9 @@ namespace AvayaPDSEmulator
                           Contents = new List<string> { "M00000" }
                         });
           break;
+
         case "AGTListJobs":
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                           Command = "AGTListJobs",
@@ -849,7 +886,7 @@ namespace AvayaPDSEmulator
                           Contents = new List<string> { "M00001", "O,GEO_HM1,A", "O,GEO_HM2,A", "O,GEO_HM3,I" }
                           //Contents = new List<string> { "M00001", "O,SallieLO,A", "O,JOB2,A" }
                         });
-          _WriteMessage(handler,
+          _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTListJobs",
@@ -860,8 +897,11 @@ namespace AvayaPDSEmulator
                             Contents = new List<string> { "M00000" }
                           });
           break;
+
         case "AGTLogoff":
-          _WriteMessage(handler,
+          state.IsDisconnecting = true;
+
+          _SendMessageToClient(handler,
                         new Message
                         {
                           Command = "AGTLogoff",
@@ -871,20 +911,35 @@ namespace AvayaPDSEmulator
                           InvokeId = "0",
                           Contents = new List<string> { "M00000" }
                         });
-          state.Disconnect = true;
           break;
       }
     }
 
-    private static void _WriteMessage(Socket sock, Message msg)
+    private static void _SendMessageToClient(Socket sock, Message msg)
     {
       var writer = new StreamWriter(new NetworkStream(sock, true));
-      var rawMsg = msg.RawMessage;
+      var raw = msg.RawMessage;
 
-      Console.WriteLine("Sent ({0}):" + rawMsg, DateTime.Now);
-      writer.Write(rawMsg);
+      Logging.LogEvent(string.Format("Sending message ({0}): {1}", DateTime.Now, raw));
+      writer.Write(raw);
       writer.Flush();
       Thread.Sleep(50);
+    }
+
+    private static void _Disconnect(StateObject state)
+    {
+      if (state != null)
+      {
+        if (States.ContainsKey(state.Id))
+        {
+          States.Remove(state.Id);
+        }
+
+        if (state.WorkSocket != null && state.WorkSocket.Connected)
+        {
+          state.WorkSocket.Close(2);
+        }
+      }
     }
   }
 }
