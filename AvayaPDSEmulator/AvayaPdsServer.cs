@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -47,14 +48,41 @@ namespace AvayaPDSEmulator
     public bool IsDisconnecting;
   }
 
+  public class Job
+  {
+    public enum JobType
+    {
+      Inbound = 'I',
+      Outbound = 'O',
+      Managed = 'M',
+      Blend = 'B'
+    }
+
+    public JobType Type { get; set; }
+    public string JobName { get; set; }
+
+    public Job(JobType type, string name)
+    {
+      Type = type;
+      JobName = name;
+    }
+  }
+
   public class AvayaPdsServer
   {
     private const int _PORT_NUMBER = 22700;
     private const int _BACKLOG = 100;
     private ManualResetEvent _allDone = new ManualResetEvent(false);
     private Thread _listenThread = null;
+    private List<Job> _jobs = new List<Job>();
     
     public Dictionary<Guid, StateObject> States = new Dictionary<Guid, StateObject>();
+
+    public AvayaPdsServer()
+    {
+      _jobs.Add(new Job(Job.JobType.Outbound, "GEO_HM1"));
+      _jobs.Add(new Job(Job.JobType.Outbound, "GEO_HM2"));
+    }
 
     public void StartListening()
     {
@@ -238,58 +266,15 @@ namespace AvayaPDSEmulator
     {
       foreach (var msg in data)
       {
-        if (msg.StartsWith("IPOP"))
+        if (msg.StartsWith("INBOUND") || msg.StartsWith("OUTBOUND") || msg.StartsWith("MANAGED") ||
+          msg.StartsWith("TRANS"))
         {
           //Blast the handling of this command as though it came from everyone
           foreach (var conn in States.Values)
           {
-            if (conn.Id != state.Id && (conn.CurrentState == "S70001" || conn.CurrentState == "S70000"))
+            if (conn.Id != state.Id && (conn.CurrentState == "S70001"))
             {
-              _HandleMessageFromClient(conn, "IPOP".PadRight(20, ' ').PadRight(55, '0'));
-            }
-          }
-        }
-        else if (msg.StartsWith("POP"))
-        {
-          //Blast the handling of this command as though it came from everyone
-          foreach (var conn in States.Values)
-          {
-            if (conn.Id != state.Id && (conn.CurrentState == "S70001" || conn.CurrentState == "S70000"))
-            {
-              _HandleMessageFromClient(conn, "POP".PadRight(20, ' ').PadRight(55, '0'));
-            }
-          }
-        }
-        else if (msg.StartsWith("MAN"))
-        {
-          //Blast the handling of this command as though it came from everyone
-          foreach (var conn in States.Values)
-          {
-            if (conn.Id != state.Id && (conn.CurrentState == "S70001" || conn.CurrentState == "S70000"))
-            {
-              _HandleMessageFromClient(conn, "MAN".PadRight(20, ' ').PadRight(55, '0'));
-            }
-          }
-        }
-        else if (msg.StartsWith("BTRANS"))
-        {
-          //Blast the handling of this command as though it came from everyone
-          foreach (var conn in States.Values)
-          {
-            if (conn.Id != state.Id && (conn.CurrentState == "S70001" || conn.CurrentState == "S70000"))
-            {
-              _HandleMessageFromClient(conn, "BTRANS".PadRight(20, ' ').PadRight(55, '0'));
-            }
-          }
-        }
-        else if (msg.StartsWith("TRANS"))
-        {
-          //Blast the handling of this command as though it came from everyone
-          foreach (var conn in States.Values)
-          {
-            if (conn.Id != state.Id && (conn.CurrentState == "S70001" || conn.CurrentState == "S70000"))
-            {
-              _HandleMessageFromClient(conn, "TRANS".PadRight(20, ' ').PadRight(55, '0'));
+              _HandleMessageFromClient(conn, msg);
             }
           }
         }
@@ -312,140 +297,124 @@ namespace AvayaPDSEmulator
       var m = Message.ParseMessage(data);
       switch (m.Command.Trim())
       {
-        case "POP":
-          state.CurrentState = "S70000";
+        case "OUTBOUND":
+          {
+            state.CurrentState = "S70000";
 
-          _SendMessageToClient(handler,
-                        new Message
+            _SendMessageToClient(handler,
+                          new Message
+                            {
+                              Command = "AGTCallNotify",
+                              Type = Message.MessageType.Notification,
+                              OrigId = "Agent server",
+                              ProcessId = "26621",
+                              InvokeId = "0",
+                              Contents = m.Contents.Take(4).ToList()
+                            });
+
+            var contents = m.Contents.Take(1).ToList();
+            contents.AddRange(m.Contents.Skip(3));
+            _SendMessageToClient(handler,
+                          new Message
+                            {
+                              Command = "AGTCallNotify",
+                              Type = Message.MessageType.Notification,
+                              OrigId = "Agent server",
+                              ProcessId = "26621",
+                              InvokeId = "0",
+                              Contents = contents.ToList()
+                            });
+
+            _SendMessageToClient(handler,
+                          new Message
+                            {
+                              Command = "AGTCallNotify",
+                              Type = Message.MessageType.Notification,
+                              OrigId = "Agent server",
+                              ProcessId = "26621",
+                              InvokeId = "0",
+                              Contents = new List<string> { "M00000" }
+                            });
+            break;
+          }
+
+        case "MANAGED":
+          {
+            state.CurrentState = "S70000";
+
+            _SendMessageToClient(handler,
+                          new Message
                           {
-                            Command = "AGTCallNotify",
+                            Command = "AGTPreviewRecord",
                             Type = Message.MessageType.Notification,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
-                            Contents = new List<string> { "M00001", "Home Phone - 479-273-7762", "OUTBOUND", "CUSTID,100" }
+                            Contents = m.Contents.Take(4).ToList()
                           });
-          _SendMessageToClient(handler,
-                        new Message
+
+            var contents = m.Contents.Take(1).ToList();
+            contents.AddRange(m.Contents.Skip(3));
+            _SendMessageToClient(handler,
+                          new Message
                           {
-                            Command = "AGTCallNotify",
+                            Command = "AGTPreviewRecord",
                             Type = Message.MessageType.Notification,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
-                            Contents = new List<string>
-                                         {
-                                  "M00001",
-                                  "CUSTID,100",
-                                  "PHONE1,4235555555",
-                                  "PHONE2,4235555555",
-                                  "COAPPSIG,599",
-                                  "Phone3,4235555555",
-                                  "Phone4,4235555555",
-                                  "Phone5,4235555555",
-                                  "CURPHONE,01"
-                                }
+                            Contents = contents
                           });
-          _SendMessageToClient(handler,
-                        new Message
+            _SendMessageToClient(handler,
+                          new Message
                           {
-                            Command = "AGTCallNotify",
+                            Command = "AGTPreviewRecord",
                             Type = Message.MessageType.Notification,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
                             Contents = new List<string> { "M00000" }
                           });
-          break;
 
-        case "MAN":
-          state.CurrentState = "S70000";
+            Thread.Sleep(5000);
 
-          _SendMessageToClient(handler,
-                        new Message
-                        {
-                          Command = "AGTPreviewRecord",
-                          Type = Message.MessageType.Notification,
-                          OrigId = "Agent server",
-                          ProcessId = "26621",
-                          InvokeId = "0",
-                          Contents = new List<string> { "M00001", "Home Phone - 423-555-5555 (Preview)", "MANAGED", "ACTID,100" }
-                        });
-          _SendMessageToClient(handler,
-                        new Message
-                        {
-                          Command = "AGTPreviewRecord",
-                          Type = Message.MessageType.Notification,
-                          OrigId = "Agent server",
-                          ProcessId = "26621",
-                          InvokeId = "0",
-                          Contents = new List<string>
-                                {
-                                  "M00001",
-                                  "ACTID,700",
-                                  "VKEY,3456789012",
-                                  "LOC,149",
-                                  "BNAMEF,f",
-                                  "BMIDNME,m",
-                                  "BNMELST,l",
-                                  "ADNUM,",
-                                  "ADDNAME,",
-                                  "ADCITY,",
-                                  "ADST,",
-                                  "ADDZIP,",
-                                  "PHONE1,4235555555",
-                                  "STRATEGY_ID,"
-                                }
-                        });
-          _SendMessageToClient(handler,
-                        new Message
-                        {
-                          Command = "AGTPreviewRecord",
-                          Type = Message.MessageType.Notification,
-                          OrigId = "Agent server",
-                          ProcessId = "26621",
-                          InvokeId = "0",
-                          Contents = new List<string> { "M00000" }
-                        });
+            _SendMessageToClient(handler,
+                          new Message
+                          {
+                            Command = "AGTManagedCall",
+                            Type = Message.MessageType.Pending,
+                            OrigId = "Agent server",
+                            ProcessId = "26621",
+                            InvokeId = "0",
+                            Contents = new List<string> { "S28833" }
+                          });
 
-          Thread.Sleep(5000);
+            Thread.Sleep(7000);
 
-          _SendMessageToClient(handler,
-                        new Message
-                        {
-                          Command = "AGTManagedCall",
-                          Type = Message.MessageType.Pending,
-                          OrigId = "Agent server",
-                          ProcessId = "26621",
-                          InvokeId = "0",
-                          Contents = new List<string> { "S28833" }
-                        });
+            _SendMessageToClient(handler,
+                          new Message
+                          {
+                            Command = "AGTManagedCall",
+                            Type = Message.MessageType.Data,
+                            OrigId = "Agent server",
+                            ProcessId = "26621",
+                            InvokeId = "0",
+                            Contents = new List<string> { "M00001", "(CONNECT)" }
+                          });
+            _SendMessageToClient(handler,
+                new Message
+                {
+                  Command = "AGTManagedCall",
+                  Type = Message.MessageType.Response,
+                  OrigId = "Agent server",
+                  ProcessId = "26621",
+                  InvokeId = "0",
+                  Contents = new List<string> { "M00000" }
+                });
+            break;
+          }
 
-          Thread.Sleep(7000);
-
-          _SendMessageToClient(handler,
-                        new Message
-                        {
-                          Command = "AGTManagedCall",
-                          Type = Message.MessageType.Data,
-                          OrigId = "Agent server",
-                          ProcessId = "26621",
-                          InvokeId = "0",
-                          Contents = new List<string> { "M00001","(CONNECT)" }
-                        });
-          _SendMessageToClient(handler,
-              new Message
-              {
-                Command = "AGTManagedCall",
-                Type = Message.MessageType.Response,
-                OrigId = "Agent server",
-                ProcessId = "26621",
-                InvokeId = "0",
-                Contents = new List<string> { "M00000" }
-              });
-          break;
-
-        case "IPOP":
+        case "INBOUND":
           state.CurrentState = "S70000";
 
           _SendMessageToClient(handler,
@@ -479,7 +448,7 @@ namespace AvayaPDSEmulator
               OrigId = "Agent server",
               ProcessId = "26621",
               InvokeId = "0",
-              Contents = new List<string> { "M00001", "GEO_HM2" }
+              Contents = new List<string> { "M00001", m.Contents[0] }
             });
           _SendMessageToClient(handler,
             new Message
@@ -490,6 +459,16 @@ namespace AvayaPDSEmulator
               ProcessId = "26621",
               InvokeId = "0",
               Contents = new List<string> { "M00000" }
+            });
+          break;
+
+        case "SETJOBS":
+          _jobs.Clear();
+          m.Contents.ForEach(t =>
+            {
+              var parts = t.Split(new char[] { ',' });
+
+              _jobs.Add(new Job((Job.JobType)parts[0][0], parts[1]));
             });
           break;
 
@@ -875,6 +854,9 @@ namespace AvayaPDSEmulator
           break;
 
         case "AGTListJobs":
+          var jobs = _jobs.Select(t => (char)t.Type + "," + t.JobName + ",A").ToList();
+          jobs.Insert(0, "M00001");
+
           _SendMessageToClient(handler,
                         new Message
                           {
@@ -884,7 +866,7 @@ namespace AvayaPDSEmulator
                           ProcessId = "26621",
                           InvokeId = "0",
                           //Contents = new List<string> { "M00001", "O,30DHOP1,I", "O,30DHOP2,I", "O,30HOHiP1,I", "O,30HOHiP2,I", "O,5BIHOP1,I", "O,5BIHOP2,I", "B,ACT_blend,I", "O,ACT_outbnd,I", "O,ALW_C1T3SL,I", "O,ALW_C7S1SL,A", "O,ATTE_C1S1,I", "O,ATTE_C1S2,I", "O,ATTE_C1S3,I", "O,ATTE_C1S5,I", "O,ATTE_C1SP,I", "O,ATTE_C1W1,I", "O,AutoTest,I", "B,BLENDCOPY,I", "B,BlendTst,I", "B,GE_JCALLP5,I", "I,InbClosed,I", "O,Matttest,I", "O,NS_OB,I", "O,SX_MSPP1,I", "O,SX_MSPP2,I", "O,SX_MSPWCP1,I", "O,SX_MSPWCP2,I", "O,SX_Mod1,I", "O,SX_Mod1_2,I", "O,SX_ModSkp,I", "I,SallieINB,I", "B,SallieLO,A", "B,SallieSLM,I", "O,Sallie_AM,I", "B,Sallie_Dev,I", "O,SaxCol2LN1,I", "M,SaxCol2LN2,I", "O,SaxColLPS1,I", "O,SaxColLPS2,I", "M,SaxColLST1,I", "O,SaxColLST2,I", "O,SaxColMSPW,I", "O,SaxColPEP1,I", "O,SaxColPEP2,I", "M,SaxColPR31,I", "M,SaxColPR32,I", "M,SaxColPR61,I", "M,SaxColPR62,I", "O,SaxCol_121,I", "O,SaxCol_122,I", "O,SaxCol_31,I", "O,SaxCol_32,I", "O,SaxCol_61,I", "O,SaxCol_62,I", "O,SaxCol_91,I", "O,SaxCol_92,I", "O,SaxCol_FC1,I", "O,SaxCol_FC2,I", "M,SaxCol_L31,I", "M,SaxCol_L32,I", "O,SaxCol_L61,I", "O,SaxCol_L62,I", "M,SaxDev,I", "M,SaxonArm,I", "M,SaxonEsc,I", "O,SaxonII_1,I", "O,SaxonII_2,I", "O,SxonII_Dev,I", "O,UVRE_C7S1,I", "O,UVRSE_C7S1,I", "O,UVRSW_C7S1,A", "O,UVRW_C7S1,A", "O,Uvrs_Dev,I", "B,blend,I", "I,inbnd1,I", "M,managed,I", "O,outbnd,I" }
-                          Contents = new List<string> { "M00001", "O,GEO_HM1,A", "O,GEO_HM2,A", "O,GEO_HM3,I" }
+                          Contents = jobs
                           //Contents = new List<string> { "M00001", "O,SallieLO,A", "O,JOB2,A" }
                         });
           _SendMessageToClient(handler,

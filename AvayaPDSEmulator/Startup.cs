@@ -35,23 +35,8 @@ namespace AvayaPDSEmulator
     static void Main()
     {
       AvayaPDSEmulator.Logging.EventLogged += Logging_EventLogged;
-      Console.WriteLine("Press [ESC] to exit.");
 
-      var s = new AvayaPdsServer();
-      s.StartListening();
-
-      while (true)
-      {
-        if (Console.KeyAvailable)
-        {
-          if (Console.ReadKey().Key == ConsoleKey.Escape)
-          {
-            break;
-          }
-        }
-
-        Thread.Sleep(100);
-      }
+      System.Windows.Forms.Application.Run(new Main());
     }
 
     static void Logging_EventLogged(object sender, AvayaPDSEmulator.LogEventArgs e)
