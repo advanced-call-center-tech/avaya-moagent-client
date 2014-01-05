@@ -134,36 +134,47 @@ namespace AvayaPDSEmulator
       {
         Logging.LogEvent("Error listening for incoming connection: " + e.ToString());
       }
+      finally
+      {
+        listener.Close();
+      }
     }
 
     private void _AcceptClientConnection(IAsyncResult ar)
     {
-      //Signal the main thread to continue
-      _allDone.Set();
+      try
+      {
+        //Signal the main thread to continue
+        _allDone.Set();
 
-      //Get the socket for the client request
-      var listener = (Socket)ar.AsyncState;
-      var handler = listener.EndAccept(ar);
+        //Get the socket for the client request
+        var listener = (Socket)ar.AsyncState;
+        var handler = listener.EndAccept(ar);
 
-      //Create the state object
-      var state = new StateObject { WorkSocket = handler };
-      States.Add(state.Id, state);
-      Logging.LogEvent(string.Format("New connection accepted, state ID '{0}'", state.Id));
+        //Create the state object
+        var state = new StateObject { WorkSocket = handler };
+        States.Add(state.Id, state);
+        Logging.LogEvent(string.Format("New connection accepted, state ID '{0}'", state.Id));
 
-      //Send the initial message
-      _SendMessageToClient(handler,
-                    new Message
-                    {
-                      Command = "AGTSTART",
-                      Type = Message.MessageType.Notification,
-                      OrigId = "Agent server",
-                      ProcessId = "26621",
-                      InvokeId = "0",
-                      Contents = new List<string> { "AGENT_STARTUP" }
-                    });
+        //Send the initial message
+        _SendMessageToClient(handler,
+                      new Message
+                      {
+                        Command = "AGTSTART",
+                        Type = Message.MessageType.Notification,
+                        OrigId = "Agent server",
+                        ProcessId = "26621",
+                        InvokeId = "0",
+                        Contents = new List<string> { "AGENT_STARTUP" }
+                      });
 
-      //Start receiving from the client
-      _BeginReceiveFromClient(state);
+        //Start receiving from the client
+        _BeginReceiveFromClient(state);
+      }
+      catch
+      {
+        //Uh...
+      }
     }
 
     private void _BeginReceiveFromClient(StateObject state)
