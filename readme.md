@@ -10,7 +10,7 @@ This project was created as a replacement for the somewhat buggy Avaya provided 
 
 * AvayaMoagentClient - This is the client itself.
 * AvayaPDSEmulator - A highly compatible simulator for for the Avaya dialer, allows for off-line testing and development.
-* AvayaTestClient - A WPF GUI test application for testing the client.
+* AvayaTestClient - A GUI test application for testing the client.
 
 ### Compatibility
 

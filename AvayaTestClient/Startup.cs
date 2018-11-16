@@ -22,17 +22,22 @@
 
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Linq;
-using System.Windows;
+using System.Text;
 
 namespace AvayaTestClient
 {
   /// <summary>
-  /// Interaction logic for App
+  /// Startup
   /// </summary>
-  public partial class App : Application
+  public class Startup
   {
+    /// <summary>
+    /// Main
+    /// </summary>
+    public static void Main()
+    {
+      System.Windows.Forms.Application.Run(new Main());
+    }
   }
 }

@@ -93,7 +93,7 @@ namespace AvayaPDSEmulator
 
     private void Connect_Click(object sender, EventArgs e)
     {
-      _client = new AvayaMoagentClient.MoagentClient(txtIP.Text, 22700);
+      _client = new AvayaMoagentClient.MoagentClient(txtIP.Text, AvayaPdsServer.PortNumber);
       _client.MessageReceived += _client_MessageReceived;
       _client.Connected += _client_ConnectComplete;
       _client.StartConnect();
@@ -110,7 +110,7 @@ namespace AvayaPDSEmulator
 
     private void _client_MessageReceived(object sender, MessageReceivedEventArgs e)
     {
-      if (e.Message.Command == "AGTListJobs" && e.Message.Contents[1] == "M00001")
+      if (e.Message.Command == AvayaMoagentClient.Commands.ListJobs.All.Cmd && e.Message.Contents[1] == "M00001")
       {
         _SetJobs(e.Message.Contents);
       }

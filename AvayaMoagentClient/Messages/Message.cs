@@ -48,6 +48,7 @@ namespace AvayaMoagentClient.Messages
       OrigId = _ORIG_ID;
       ProcessId = _PROCESS_ID;
       InvokeId = _INVOKE_ID;
+      Contents = new List<string>();
     }
 
     /// <summary>
@@ -152,6 +153,7 @@ namespace AvayaMoagentClient.Messages
       var ret = new Message();
 
       ret.Command = cmd.Cmd;
+      ret.Type = MessageType.Command;
       ret.Contents.Clear();
       ret.Contents.AddRange(cmd.Contents);
 
@@ -214,7 +216,6 @@ namespace AvayaMoagentClient.Messages
       OrigId = raw.Substring(21, 20).Trim();
       ProcessId = raw.Substring(41, 6).Trim();
       InvokeId = raw.Substring(47, 4).Trim();
-      Contents = new List<string>();
 
       Contents.Clear();
       foreach (var data in raw.Substring(55).Replace(_END_OF_LINE.ToString(), string.Empty).Split(_RECORD_SEPERATOR))

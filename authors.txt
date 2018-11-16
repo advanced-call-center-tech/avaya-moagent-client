@@ -2,3 +2,4 @@ Authors and contributors:
 
 Matthew J Little <matt@matthewjlittle.com>
 Adam Caudill <adam@adamcaudill.com>
+Brandon Wilson <brandonlw@gmail.com>

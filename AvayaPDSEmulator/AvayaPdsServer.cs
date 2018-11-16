@@ -41,7 +41,8 @@ namespace AvayaPDSEmulator
   [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "Reviewed.")]
   public class AvayaPdsServer
   {
-    private const int _PORT_NUMBER = 22700;
+    public const int PortNumber = 22700;
+
     private const int _BACKLOG = 100;
     private ManualResetEvent _allDone = new ManualResetEvent(false);
     private Thread _listenThread = null;
@@ -54,8 +55,8 @@ namespace AvayaPDSEmulator
     {
       States = new Dictionary<Guid, StateObject>();
 
-      _jobs.Add(new Job(Job.JobType.Outbound, "GEO_HM1"));
-      _jobs.Add(new Job(Job.JobType.Outbound, "GEO_HM2"));
+      _jobs.Add(new Job(Job.JobType.Outbound, "TEST_JOB1"));
+      _jobs.Add(new Job(Job.JobType.Outbound, "TEST_JOB2"));
     }
 
     /// <summary>
@@ -96,7 +97,7 @@ namespace AvayaPDSEmulator
       try
       {
         //Bind the socket to the local endpoint and listen for incoming connections
-        listener.Bind(new IPEndPoint(IPAddress.Any, _PORT_NUMBER));
+        listener.Bind(new IPEndPoint(IPAddress.Any, PortNumber));
         listener.Listen(_BACKLOG);
 
         while (true)
@@ -868,9 +869,7 @@ namespace AvayaPDSEmulator
                           OrigId = "Agent server",
                           ProcessId = "26621",
                           InvokeId = "0",
-                          ////Contents = new List<string> { "M00001", "O,30DHOP1,I", "O,30DHOP2,I", "O,30HOHiP1,I", "O,30HOHiP2,I", "O,5BIHOP1,I", "O,5BIHOP2,I", "B,ACT_blend,I", "O,ACT_outbnd,I", "O,ALW_C1T3SL,I", "O,ALW_C7S1SL,A", "O,ATTE_C1S1,I", "O,ATTE_C1S2,I", "O,ATTE_C1S3,I", "O,ATTE_C1S5,I", "O,ATTE_C1SP,I", "O,ATTE_C1W1,I", "O,AutoTest,I", "B,BLENDCOPY,I", "B,BlendTst,I", "B,GE_JCALLP5,I", "I,InbClosed,I", "O,Matttest,I", "O,NS_OB,I", "O,SX_MSPP1,I", "O,SX_MSPP2,I", "O,SX_MSPWCP1,I", "O,SX_MSPWCP2,I", "O,SX_Mod1,I", "O,SX_Mod1_2,I", "O,SX_ModSkp,I", "I,SallieINB,I", "B,SallieLO,A", "B,SallieSLM,I", "O,Sallie_AM,I", "B,Sallie_Dev,I", "O,SaxCol2LN1,I", "M,SaxCol2LN2,I", "O,SaxColLPS1,I", "O,SaxColLPS2,I", "M,SaxColLST1,I", "O,SaxColLST2,I", "O,SaxColMSPW,I", "O,SaxColPEP1,I", "O,SaxColPEP2,I", "M,SaxColPR31,I", "M,SaxColPR32,I", "M,SaxColPR61,I", "M,SaxColPR62,I", "O,SaxCol_121,I", "O,SaxCol_122,I", "O,SaxCol_31,I", "O,SaxCol_32,I", "O,SaxCol_61,I", "O,SaxCol_62,I", "O,SaxCol_91,I", "O,SaxCol_92,I", "O,SaxCol_FC1,I", "O,SaxCol_FC2,I", "M,SaxCol_L31,I", "M,SaxCol_L32,I", "O,SaxCol_L61,I", "O,SaxCol_L62,I", "M,SaxDev,I", "M,SaxonArm,I", "M,SaxonEsc,I", "O,SaxonII_1,I", "O,SaxonII_2,I", "O,SxonII_Dev,I", "O,UVRE_C7S1,I", "O,UVRSE_C7S1,I", "O,UVRSW_C7S1,A", "O,UVRW_C7S1,A", "O,Uvrs_Dev,I", "B,blend,I", "I,inbnd1,I", "M,managed,I", "O,outbnd,I" }
                           Contents = jobs
-                          ////Contents = new List<string> { "M00001", "O,SallieLO,A", "O,JOB2,A" }
                         });
           _SendMessageToClient(handler,
                         new Message
