@@ -478,10 +478,19 @@ namespace AvayaMoagentClient
 
       foreach (var msg in msgs)
       {
-        lastMsg = Message.ParseMessage(msg);
-        if (MessageReceived != null)
+        try
         {
-          MessageReceived(this, new MessageReceivedEventArgs { Message = lastMsg });
+          lastMsg = Message.ParseMessage(msg);
+          if (MessageReceived != null)
+          {
+            MessageReceived(this, new MessageReceivedEventArgs { Message = lastMsg });
+          }
+        }
+        catch
+        {
+          //Well, we tried, but we really shouldn't let an exception from alerting someone that a message was received
+          // disrupt the handling of the other messages
+          //TODO: Something should happen here
         }
       }
 
