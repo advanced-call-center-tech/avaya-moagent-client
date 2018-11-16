@@ -20,15 +20,22 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-namespace AvayaMoagentClient.Enums
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace AvayaMoagentClient.Enumerations
 {
-  public enum WorkClass
+  /// <summary>
+  /// JobListingType
+  /// </summary>
+  public enum JobListingType
   {
-    Undefined = 'U',
+    All = 'A',
     Inbound = 'I',
-    Outbound = 'O',
     Blend = 'B',
-    PersonToPerson = 'P',
-    Managed = 'M'
+    Managed = 'M',
+    Outbound = 'O'
   }
 }

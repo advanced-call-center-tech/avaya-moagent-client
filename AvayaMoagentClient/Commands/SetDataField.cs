@@ -20,20 +20,24 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using AvayaMoagentClient.Enums;
+using AvayaMoagentClient.Enumerations;
+using AvayaMoagentClient.Messages;
 
 namespace AvayaMoagentClient.Commands
 {
-  public class SetDataField : Message
+  /// <summary>
+  /// SetDataField
+  /// </summary>
+  public class SetDataField : Command
   {
-    private const string COMMAND = "AGTSetDataField";
-
+    /// <summary>
+    /// Creates a SetDataField command with the specified type and name.
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="fieldName"></param>
     public SetDataField(FieldListType type, string fieldName)
-      : this(type, fieldName, false)
-    { }
-
-    public SetDataField(FieldListType type, string fieldName, bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage, ((char)type).ToString(), fieldName)
-    { }
+      : base("AGTSetDataField", ((char)type).ToString(), fieldName)
+    {
+    }
   }
 }

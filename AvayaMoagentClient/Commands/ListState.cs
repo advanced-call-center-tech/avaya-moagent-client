@@ -20,18 +20,31 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class ListState : Message
+  /// <summary>
+  /// ListState
+  /// </summary>
+  public class ListState : Command
   {
-    private const string COMMAND = "AGTListState";
+    static ListState()
+    {
+      Default = new ListState();
+    }
 
+    /// <summary>
+    /// Default constructor
+    /// </summary>
     public ListState()
-      : this(false)
-    { }
+      : base("AGTListState")
+    {
+    }
 
-    public ListState(bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage)
-    { }
+    /// <summary>
+    /// All
+    /// </summary>
+    public static ListState Default { get; private set; }
   }
 }

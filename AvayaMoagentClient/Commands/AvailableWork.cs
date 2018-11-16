@@ -20,18 +20,31 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class AvailableWork : Message
+  /// <summary>
+  /// AvailableWork
+  /// </summary>
+  public class AvailableWork : Command
   {
-    private const string COMMAND = "AGTAvailWork";
+    static AvailableWork()
+    {
+      Default = new AvailableWork();
+    }
 
-       public AvailableWork()
-      : this(false)
-    { }
+    /// <summary>
+    /// Default constructor
+    /// </summary>
+    public AvailableWork()
+      : base("AGTAvailWork")
+    {
+    }
 
-    public AvailableWork(bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage)
-    { }
+    /// <summary>
+    /// Default
+    /// </summary>
+    public static AvailableWork Default { get; private set; }
   }
 }

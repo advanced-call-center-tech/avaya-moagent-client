@@ -20,18 +20,31 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class ManagedCall : Message
+  /// <summary>
+  /// ManagedCall
+  /// </summary>
+  public class ManagedCall : Command
   {
-    private const string COMMAND = "AGTManagedCall";
+    static ManagedCall()
+    {
+      Default = new ManagedCall();
+    }
 
+    /// <summary>
+    /// Default constructor
+    /// </summary>
     public ManagedCall()
-      : this(false)
-    { }
+      : base("AGTManagedCall")
+    {
+    }
 
-    public ManagedCall(bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage)
-    { }
+    /// <summary>
+    /// Default
+    /// </summary>
+    public static ManagedCall Default { get; private set; }
   }
 }

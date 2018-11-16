@@ -32,11 +32,18 @@ namespace AvayaPDSEmulator
   /// </summary>
   public class LogEventArgs : EventArgs
   {
-    public string Message { get; set; }
-
+    /// <summary>
+    /// Creates a LogEventArgs object with the specified message.
+    /// </summary>
+    /// <param name="message"></param>
     public LogEventArgs(string message)
     {
       Message = message;
     }
+
+    /// <summary>
+    /// Message.
+    /// </summary>
+    public string Message { get; set; }
   }
 }

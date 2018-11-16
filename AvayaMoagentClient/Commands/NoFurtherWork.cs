@@ -20,19 +20,31 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class NoFurtherWork : Message
+  /// <summary>
+  /// NoFurtherWork
+  /// </summary>
+  public class NoFurtherWork : Command
   {
-    private const string COMMAND = "AGTNoFurtherWork";
+    static NoFurtherWork()
+    {
+      Default = new NoFurtherWork();
+    }
 
+    /// <summary>
+    /// Default constructor
+    /// </summary>
     public NoFurtherWork()
-      : this(false)
-    { }
+      : base("AGTNoFurtherWork")
+    {
+    }
 
-    public NoFurtherWork(bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage)
-    { }
+    /// <summary>
+    /// Default
+    /// </summary>
+    public static NoFurtherWork Default { get; private set; }
   }
 }
-

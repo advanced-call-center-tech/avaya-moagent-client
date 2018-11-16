@@ -20,18 +20,24 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class SetPassword : Message
+  /// <summary>
+  /// SetPassword
+  /// </summary>
+  public class SetPassword : Command
   {
-    private const string COMMAND = "AGTSetPassword";
-
+    /// <summary>
+    /// Creates a SetPassword command with the specified user ID and password.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="presentPassword"></param>
+    /// <param name="newPassword"></param>
     public SetPassword(string userId, string presentPassword, string newPassword)
-      : this(userId, presentPassword, newPassword, false)
-    { }
-
-    public SetPassword(string userId, string presentPassword, string newPassword, bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage, userId, presentPassword, newPassword)
-    { }
+      : base("AGTSetPassword", userId, presentPassword, newPassword)
+    {
+    }
   }
 }

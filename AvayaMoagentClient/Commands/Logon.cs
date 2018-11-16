@@ -20,18 +20,23 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class Logon : Message
+  /// <summary>
+  /// Logon
+  /// </summary>
+  public class Logon : Command
   {
-    private const string COMMAND = "AGTLogon";
-
-    public Logon(string username, string password) 
-      : this(username, password, false)
-    { }
-
-    public Logon(string username, string password, bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage, username, password)
-    { }
+    /// <summary>
+    /// Creates a Logon command with the specified username and password.
+    /// </summary>
+    /// <param name="userName"></param>
+    /// <param name="password"></param>
+    public Logon(string userName, string password)
+      : base("AGTLogon", userName, password)
+    {
+    }
   }
 }

@@ -30,16 +30,22 @@ using System.Threading;
 
 namespace AvayaPDSEmulator
 {
-  class Startup
+  /// <summary>
+  /// Startup
+  /// </summary>
+  public class Startup
   {
-    static void Main()
+    /// <summary>
+    /// Main
+    /// </summary>
+    public static void Main()
     {
       AvayaPDSEmulator.Logging.EventLogged += Logging_EventLogged;
 
       System.Windows.Forms.Application.Run(new Main());
     }
 
-    static void Logging_EventLogged(object sender, AvayaPDSEmulator.LogEventArgs e)
+    internal static void Logging_EventLogged(object sender, AvayaPDSEmulator.LogEventArgs e)
     {
       Console.WriteLine(e.Message);
     }

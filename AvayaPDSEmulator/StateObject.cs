@@ -21,11 +21,70 @@
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Sockets;
+using System.Text;
 
-namespace AvayaMoagentClient
+namespace AvayaPDSEmulator
 {
-  public class MessageSentEventArgs : EventArgs
+  /// <summary>
+  /// StateObject
+  /// </summary>
+  public class StateObject
   {
-    public Message Message { get; set; }
+    public const int ReadBufferSize = 1024;
+
+    /// <summary>
+    /// Default constructor
+    /// </summary>
+    public StateObject()
+    {
+      Id = Guid.NewGuid();
+      Buffer = new byte[ReadBufferSize];
+      Message = new StringBuilder();
+      CurrentState = "S70004"; //logged on, idle, not attached to job
+      CurrentJob = string.Empty;
+    }
+
+    /// <summary>
+    /// Id
+    /// </summary>
+    public Guid Id { get; private set; }
+
+    /// <summary>
+    /// WorkSocket
+    /// </summary>
+    public Socket WorkSocket { get; set; }
+
+    /// <summary>
+    /// Buffer
+    /// </summary>
+    public byte[] Buffer { get; private set; }
+
+    /// <summary>
+    /// Message
+    /// </summary>
+    public StringBuilder Message { get; private set; }
+
+    /// <summary>
+    /// CurrentState
+    /// </summary>
+    public string CurrentState { get; set; }
+
+    /// <summary>
+    /// CurrentJob
+    /// </summary>
+    public string CurrentJob { get; set; }
+
+    /// <summary>
+    /// IsLeavingJob
+    /// </summary>
+    public bool IsLeavingJob { get; set; }
+
+    /// <summary>
+    /// IsDisconnecting
+    /// </summary>
+    public bool IsDisconnecting { get; set; }
   }
 }

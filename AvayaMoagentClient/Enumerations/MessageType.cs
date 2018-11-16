@@ -22,17 +22,22 @@
 
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Linq;
-using System.Windows;
+using System.Text;
 
-namespace AvayaTestClient
+namespace AvayaMoagentClient.Enumerations
 {
   /// <summary>
-  /// Interaction logic for App
+  /// MessageType
   /// </summary>
-  public partial class App : Application
+  public enum MessageType
   {
+    Command = 'C',
+    Pending = 'P',
+    Data = 'D',
+    Response = 'R',
+    Busy = 'B',
+    Notification = 'N',
+    Undefined = 'U'
   }
 }

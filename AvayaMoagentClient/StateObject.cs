@@ -22,17 +22,46 @@
 
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Linq;
-using System.Windows;
+using System.Net.Sockets;
+using System.Text;
+using OpenSSL;
+using OpenSSL.Core;
+using OpenSSL.X509;
 
-namespace AvayaTestClient
+namespace AvayaMoagentClient
 {
   /// <summary>
-  /// Interaction logic for App
+  /// State object for receiving data from remote device.
   /// </summary>
-  public partial class App : Application
+  internal sealed class StateObject
   {
+    public const int BufferSize = 256;
+
+    public StateObject()
+    {
+      Buffer = new byte[BufferSize];
+      StringBuilder = new StringBuilder();
+    }
+
+    /// <summary>
+    /// Stream
+    /// </summary>
+    public Socket Stream { get; set; }
+
+    /// <summary>
+    /// SecureStream
+    /// </summary>
+    public SslStream SecureStream { get; set; }
+
+    /// <summary>
+    /// Buffer.
+    /// </summary>
+    public byte[] Buffer { get; private set; }
+
+    /// <summary>
+    /// String builder.
+    /// </summary>
+    public StringBuilder StringBuilder { get; private set; }
   }
 }

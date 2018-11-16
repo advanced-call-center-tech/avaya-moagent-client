@@ -20,11 +20,39 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-namespace AvayaMoagentClient.Enums
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace AvayaMoagentClient.Commands
 {
-  public enum FieldListType
+  /// <summary>
+  /// Command
+  /// </summary>
+  public class Command
   {
-    Inbound = 'I',
-    Outbound = 'O'
+    /// <summary>
+    /// Generates a command object with optional parameters.
+    /// </summary>
+    /// <param name="command"></param>
+    /// <param name="contents"></param>
+    public Command(string command, params string[] contents)
+    {
+      Cmd = command;
+
+      Contents = new List<string>();
+      Contents.AddRange(contents);
+    }
+
+    /// <summary>
+    /// Command string.
+    /// </summary>
+    public string Cmd { get; set; }
+
+    /// <summary>
+    /// Optional parameters.
+    /// </summary>
+    public List<string> Contents { get; private set; }
   }
 }

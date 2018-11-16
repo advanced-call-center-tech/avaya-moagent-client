@@ -20,18 +20,22 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class ReserveHeadset : Message
+  /// <summary>
+  /// ReserveHeadset
+  /// </summary>
+  public class ReserveHeadset : Command
   {
-    private const string COMMAND = "AGTReserveHeadset";
-
+    /// <summary>
+    /// Creates a ReserveHeadset command with the specified extension.
+    /// </summary>
+    /// <param name="extension"></param>
     public ReserveHeadset(string extension)
-      : this(extension, false)
-    { }
-
-    public ReserveHeadset(string extension, bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage, extension)
-    { }
+      : base("AGTReserveHeadset", extension)
+    {
+    }
   }
 }

@@ -1,4 +1,26 @@
-﻿using System;
+﻿//Copyright (c) 2010 - 2012, Matthew J Little and contributors.
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without modification, are permitted
+//provided that the following conditions are met:
+//
+//  Redistributions of source code must retain the above copyright notice, this list of conditions
+//  and the following disclaimer.
+//
+//  Redistributions in binary form must reproduce the above copyright notice, this list of
+//  conditions and the following disclaimer in the documentation and/or other materials provided
+//  with the distribution.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR 
+//IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+//FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+//CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+//DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+//WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -7,16 +29,25 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using AvayaMoagentClient;
+using AvayaMoagentClient.Enumerations;
+using AvayaMoagentClient.Messages;
 
 namespace AvayaPDSEmulator
 {
+  /// <summary>
+  /// Main
+  /// </summary>
   public partial class Main : Form
   {
-    private delegate void _MessageReceivedDelegate(object sender, AvayaMoagentClient.MessageReceivedEventArgs e);
     private Thread _repeatThread = null;
     private AvayaPdsServer _server = null;
     private AvayaMoagentClient.MoagentClient _client = null;
+    private int _seconds;
 
+    /// <summary>
+    /// Default constructor
+    /// </summary>
     public Main()
     {
       InitializeComponent();
@@ -24,17 +55,20 @@ namespace AvayaPDSEmulator
       cboCallType.SelectedIndex = 0;
     }
 
+    private delegate void _MessageReceivedDelegate(object sender, MessageReceivedEventArgs e);
+    private delegate void _SetJobsDelegate(List<string> jobs);
+
     private void Main_Load(object sender, EventArgs e)
     {
       _SetControls();
     }
 
-    private void txtJobName_TextChanged(object sender, EventArgs e)
+    private void JobName_TextChanged(object sender, EventArgs e)
     {
       _SetControls();
     }
 
-    private void btnAdd_Click(object sender, EventArgs e)
+    private void Add_Click(object sender, EventArgs e)
     {
       if (!string.IsNullOrEmpty(txtJobName.Text))
       {
@@ -46,7 +80,7 @@ namespace AvayaPDSEmulator
       }
     }
 
-    private void btnRemove_Click(object sender, EventArgs e)
+    private void Remove_Click(object sender, EventArgs e)
     {
       if (lstJobs.SelectedIndex != -1)
       {
@@ -57,12 +91,12 @@ namespace AvayaPDSEmulator
       }
     }
 
-    private void btnConnect_Click(object sender, EventArgs e)
+    private void Connect_Click(object sender, EventArgs e)
     {
       _client = new AvayaMoagentClient.MoagentClient(txtIP.Text, 22700);
       _client.MessageReceived += _client_MessageReceived;
-      _client.ConnectComplete += _client_ConnectComplete;
-      _client.StartConnectAsync();
+      _client.Connected += _client_ConnectComplete;
+      _client.StartConnect();
 
       _SetControls();
     }
@@ -71,10 +105,10 @@ namespace AvayaPDSEmulator
     {
       _SetControls();
 
-      _client.Send(new AvayaMoagentClient.Commands.ListJobs(AvayaMoagentClient.Commands.ListJobs.JobListingType.All, true));
+      _client.Send(new AvayaMoagentClient.Commands.ListJobs(JobListingType.All));
     }
 
-    private void _client_MessageReceived(object sender, AvayaMoagentClient.MessageReceivedEventArgs e)
+    private void _client_MessageReceived(object sender, MessageReceivedEventArgs e)
     {
       if (e.Message.Command == "AGTListJobs" && e.Message.Contents[1] == "M00001")
       {
@@ -82,9 +116,9 @@ namespace AvayaPDSEmulator
       }
     }
 
-    private void btnDisconnect_Click(object sender, EventArgs e)
+    private void Disconnect_Click(object sender, EventArgs e)
     {
-      _client.ConnectComplete -= _client_ConnectComplete;
+      _client.Connected -= _client_ConnectComplete;
       _client.MessageReceived -= _client_MessageReceived;
       _client.Disconnect();
       _client = null;
@@ -92,7 +126,7 @@ namespace AvayaPDSEmulator
       _SetControls();
     }
 
-    private void btnStart_Click(object sender, EventArgs e)
+    private void Start_Click(object sender, EventArgs e)
     {
       _server = new AvayaPdsServer();
       _server.StartListening();
@@ -100,7 +134,7 @@ namespace AvayaPDSEmulator
       _SetControls();
     }
 
-    private void btnStop_Click(object sender, EventArgs e)
+    private void Stop_Click(object sender, EventArgs e)
     {
       _server.StopListening();
       _server = null;
@@ -108,22 +142,22 @@ namespace AvayaPDSEmulator
       _SetControls();
     }
 
-    private void btnSendCall_Click(object sender, EventArgs e)
+    private void SendCall_Click(object sender, EventArgs e)
     {
       _SendCall();
     }
 
-    private void lstJobs_SelectedIndexChanged(object sender, EventArgs e)
+    private void Jobs_SelectedIndexChanged(object sender, EventArgs e)
     {
       _SetControls();
     }
 
-    private void txtSeconds_TextChanged(object sender, EventArgs e)
+    private void Seconds_TextChanged(object sender, EventArgs e)
     {
       int.TryParse(txtSeconds.Text, out _seconds);
     }
 
-    private void chkRepeat_CheckedChanged(object sender, EventArgs e)
+    private void Repeat_CheckedChanged(object sender, EventArgs e)
     {
       if (chkRepeat.Checked)
       {
@@ -142,7 +176,6 @@ namespace AvayaPDSEmulator
       }
     }
 
-    private delegate void _SetJobsDelegate(List<string> jobs);
     private void _SetJobs(List<string> jobs)
     {
       if (this.InvokeRequired)
@@ -172,7 +205,7 @@ namespace AvayaPDSEmulator
         btnStart.Enabled = (_server == null);
         btnStop.Enabled = (_server != null);
 
-        if (_client != null && _client.Connected)
+        if (_client != null && _client.IsConnected)
         {
           btnConnect.Enabled = false;
           txtIP.Enabled = false;
@@ -202,8 +235,8 @@ namespace AvayaPDSEmulator
         jobs.Add(Convert.ToString(item));
       }
 
-      _client.Send(new AvayaMoagentClient.Message("SETJOBS",
-        AvayaMoagentClient.Message.MessageType.Command, true, jobs.ToArray()));
+      _client.Send(new AvayaMoagentClient.Messages.Message("SETJOBS",
+        AvayaMoagentClient.Enumerations.MessageType.Command, jobs.ToArray()));
     }
 
     private void _EndRepeatThread()
@@ -215,7 +248,6 @@ namespace AvayaPDSEmulator
       }
     }
 
-    private int _seconds;
     private void _RepeatThread()
     {
       do
@@ -242,8 +274,7 @@ namespace AvayaPDSEmulator
         data.Add(type);
         data.AddRange(txtData.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries));
 
-        _client.Send(new AvayaMoagentClient.Message(type,
-          AvayaMoagentClient.Message.MessageType.Command, true, data.ToArray()));
+        _client.Send(new AvayaMoagentClient.Commands.Command(type, data.ToArray()));
       }
     }
   }

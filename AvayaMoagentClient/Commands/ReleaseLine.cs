@@ -20,18 +20,31 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class ReleaseLine : Message
+  /// <summary>
+  /// ReleaseLine
+  /// </summary>
+  public class ReleaseLine : Command
   {
-    private const string COMMAND = "AGTReleaseLine";
+    static ReleaseLine()
+    {
+      Default = new ReleaseLine();
+    }
 
+    /// <summary>
+    /// Default constructor
+    /// </summary>
     public ReleaseLine()
-      : this(false)
-    { }
+      : base("AGTReleaseLine")
+    {
+    }
 
-    public ReleaseLine(bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage)
-    { }
+    /// <summary>
+    /// Default
+    /// </summary>
+    public static ReleaseLine Default { get; private set; }
   }
 }

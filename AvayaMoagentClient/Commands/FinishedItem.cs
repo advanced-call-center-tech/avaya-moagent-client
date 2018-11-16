@@ -20,18 +20,22 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class FinishedItem : Message
+  /// <summary>
+  /// FinishedItem
+  /// </summary>
+  public class FinishedItem : Command
   {
-    private const string COMMAND = "AGTFinishedItem";
-
+    /// <summary>
+    /// Creates a FinishedItem command with the specified completion code.
+    /// </summary>
+    /// <param name="completionCode"></param>
     public FinishedItem(string completionCode)
-      : this(completionCode, false)
-    { }
-
-    public FinishedItem(string completionCode, bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage, completionCode)
-    { }
+      : base("AGTFinishedItem", completionCode)
+    {
+    }
   }
 }

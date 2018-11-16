@@ -23,51 +23,22 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Text;
-using AvayaMoagentClient;
+using System.Threading;
+using AvayaMoagentClient.Enumerations;
+using AvayaMoagentClient.Messages;
 
 namespace AvayaPDSEmulator
 {
-  //State object for reading client data asynchronously
-  public class StateObject
-  {
-    public const int READ_BUFFER_SIZE = 1024;
-
-    public Guid Id = Guid.NewGuid();
-    public Socket WorkSocket;
-    public byte[] Buffer = new byte[READ_BUFFER_SIZE];
-    public StringBuilder Message = new StringBuilder();
-    public string CurrentState = "S70004"; //logged on, idle, not attached to job
-    public string CurrentJob = string.Empty;
-    public bool IsLeavingJob;
-    public bool IsDisconnecting;
-  }
-
-  public class Job
-  {
-    public enum JobType
-    {
-      Inbound = 'I',
-      Outbound = 'O',
-      Managed = 'M',
-      Blend = 'B'
-    }
-
-    public JobType Type { get; set; }
-    public string JobName { get; set; }
-
-    public Job(JobType type, string name)
-    {
-      Type = type;
-      JobName = name;
-    }
-  }
-
+  /// <summary>
+  /// AvayaPdsServer
+  /// </summary>
+  [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "Reviewed.")]
   public class AvayaPdsServer
   {
     private const int _PORT_NUMBER = 22700;
@@ -75,15 +46,26 @@ namespace AvayaPDSEmulator
     private ManualResetEvent _allDone = new ManualResetEvent(false);
     private Thread _listenThread = null;
     private List<Job> _jobs = new List<Job>();
-    
-    public Dictionary<Guid, StateObject> States = new Dictionary<Guid, StateObject>();
 
+    /// <summary>
+    /// Default constructor
+    /// </summary>
     public AvayaPdsServer()
     {
+      States = new Dictionary<Guid, StateObject>();
+
       _jobs.Add(new Job(Job.JobType.Outbound, "GEO_HM1"));
       _jobs.Add(new Job(Job.JobType.Outbound, "GEO_HM2"));
     }
 
+    /// <summary>
+    /// States
+    /// </summary>
+    public Dictionary<Guid, StateObject> States { get; private set; }
+
+    /// <summary>
+    /// StartListening
+    /// </summary>
     public void StartListening()
     {
       if (_listenThread == null)
@@ -94,6 +76,9 @@ namespace AvayaPDSEmulator
       }
     }
 
+    /// <summary>
+    /// StopListening
+    /// </summary>
     public void StopListening()
     {
       if (_listenThread != null)
@@ -124,7 +109,6 @@ namespace AvayaPDSEmulator
           //Wait until a connection is made before continuing
           _allDone.WaitOne();
         }
-
       }
       catch (ThreadAbortException)
       {
@@ -161,7 +145,7 @@ namespace AvayaPDSEmulator
                       new Message
                       {
                         Command = "AGTSTART",
-                        Type = Message.MessageType.Notification,
+                        Type = MessageType.Notification,
                         OrigId = "Agent server",
                         ProcessId = "26621",
                         InvokeId = "0",
@@ -181,7 +165,7 @@ namespace AvayaPDSEmulator
     {
       if (!state.IsDisconnecting)
       {
-        state.WorkSocket.BeginReceive(state.Buffer, 0, StateObject.READ_BUFFER_SIZE, 0,
+        state.WorkSocket.BeginReceive(state.Buffer, 0, StateObject.ReadBufferSize, 0,
           new AsyncCallback(_ReceiveFromClient), state);
       }
       else
@@ -240,7 +224,7 @@ namespace AvayaPDSEmulator
           else
           {
             //Not all data received, so get more
-            handler.BeginReceive(state.Buffer, 0, StateObject.READ_BUFFER_SIZE, 0,
+            handler.BeginReceive(state.Buffer, 0, StateObject.ReadBufferSize, 0,
               new AsyncCallback(_ReceiveFromClient), state);
           }
         }
@@ -316,7 +300,7 @@ namespace AvayaPDSEmulator
                           new Message
                             {
                               Command = "AGTCallNotify",
-                              Type = Message.MessageType.Notification,
+                              Type = MessageType.Notification,
                               OrigId = "Agent server",
                               ProcessId = "26621",
                               InvokeId = "0",
@@ -329,7 +313,7 @@ namespace AvayaPDSEmulator
                           new Message
                             {
                               Command = "AGTCallNotify",
-                              Type = Message.MessageType.Notification,
+                              Type = MessageType.Notification,
                               OrigId = "Agent server",
                               ProcessId = "26621",
                               InvokeId = "0",
@@ -340,7 +324,7 @@ namespace AvayaPDSEmulator
                           new Message
                             {
                               Command = "AGTCallNotify",
-                              Type = Message.MessageType.Notification,
+                              Type = MessageType.Notification,
                               OrigId = "Agent server",
                               ProcessId = "26621",
                               InvokeId = "0",
@@ -357,7 +341,7 @@ namespace AvayaPDSEmulator
                           new Message
                           {
                             Command = "AGTPreviewRecord",
-                            Type = Message.MessageType.Notification,
+                            Type = MessageType.Notification,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -370,7 +354,7 @@ namespace AvayaPDSEmulator
                           new Message
                           {
                             Command = "AGTPreviewRecord",
-                            Type = Message.MessageType.Notification,
+                            Type = MessageType.Notification,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -380,7 +364,7 @@ namespace AvayaPDSEmulator
                           new Message
                           {
                             Command = "AGTPreviewRecord",
-                            Type = Message.MessageType.Notification,
+                            Type = MessageType.Notification,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -393,7 +377,7 @@ namespace AvayaPDSEmulator
                           new Message
                           {
                             Command = "AGTManagedCall",
-                            Type = Message.MessageType.Pending,
+                            Type = MessageType.Pending,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -406,7 +390,7 @@ namespace AvayaPDSEmulator
                           new Message
                           {
                             Command = "AGTManagedCall",
-                            Type = Message.MessageType.Data,
+                            Type = MessageType.Data,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -416,7 +400,7 @@ namespace AvayaPDSEmulator
                 new Message
                 {
                   Command = "AGTManagedCall",
-                  Type = Message.MessageType.Response,
+                  Type = MessageType.Response,
                   OrigId = "Agent server",
                   ProcessId = "26621",
                   InvokeId = "0",
@@ -432,7 +416,7 @@ namespace AvayaPDSEmulator
                         new Message
                         {
                           Command = "AGTCallNotify",
-                          Type = Message.MessageType.Notification,
+                          Type = MessageType.Notification,
                           OrigId = "Agent server",
                           ProcessId = "26621",
                           InvokeId = "0",
@@ -442,7 +426,7 @@ namespace AvayaPDSEmulator
                         new Message
                         {
                           Command = "AGTCallNotify",
-                          Type = Message.MessageType.Notification,
+                          Type = MessageType.Notification,
                           OrigId = "Agent server",
                           ProcessId = "26621",
                           InvokeId = "0",
@@ -455,7 +439,7 @@ namespace AvayaPDSEmulator
             new Message
             {
               Command = "AGTJobTransLink",
-              Type = Message.MessageType.Notification,
+              Type = MessageType.Notification,
               OrigId = "Agent server",
               ProcessId = "26621",
               InvokeId = "0",
@@ -465,7 +449,7 @@ namespace AvayaPDSEmulator
             new Message
             {
               Command = "AGTJobTransLink",
-              Type = Message.MessageType.Notification,
+              Type = MessageType.Notification,
               OrigId = "Agent server",
               ProcessId = "26621",
               InvokeId = "0",
@@ -488,7 +472,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTLogon",
-                            Type = Message.MessageType.Pending,
+                            Type = MessageType.Pending,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -498,7 +482,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTLogon",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -511,7 +495,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTReserveHeadset",
-                            Type = Message.MessageType.Pending,
+                            Type = MessageType.Pending,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -524,7 +508,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTReserveHeadset",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -537,7 +521,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTConnHeadset",
-                            Type = Message.MessageType.Pending,
+                            Type = MessageType.Pending,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -550,7 +534,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTConnHeadset",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -563,15 +547,19 @@ namespace AvayaPDSEmulator
 
           //If on a job, add the job name to the message
           if (state.CurrentState != "S70004")
+          {
             content = state.CurrentState + "," + state.CurrentJob;
+          }
           else
+          {
             content = state.CurrentState;
+          }
 
           _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTListState",
-                            Type = Message.MessageType.Data,
+                            Type = MessageType.Data,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -581,7 +569,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTListState",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -594,7 +582,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTSetWorkClass",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -610,7 +598,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTAttachJob",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -623,7 +611,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTSetNotifyKeyField",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -636,7 +624,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTSetDataField",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -651,7 +639,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTAvailWork",
-                            Type = Message.MessageType.Pending,
+                            Type = MessageType.Pending,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -661,7 +649,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTAvailWork",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -674,7 +662,7 @@ namespace AvayaPDSEmulator
                         new Message
                         {
                           Command = "AGTTransferCall",
-                          Type = Message.MessageType.Response,
+                          Type = MessageType.Response,
                           OrigId = "Agent server",
                           ProcessId = "26621",
                           InvokeId = "0",
@@ -687,7 +675,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTReleaseLine",
-                            Type = Message.MessageType.Pending,
+                            Type = MessageType.Pending,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -697,7 +685,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTReleaseLine",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -712,11 +700,11 @@ namespace AvayaPDSEmulator
                           new Message
                             {
                               Command = "AGTReadyNextItem",
-                              Type = Message.MessageType.Response,
+                              Type = MessageType.Response,
                               OrigId = "Agent server",
                               ProcessId = "26621",
                               InvokeId = "0",
-                              //IsError = true,
+                              ////IsError = true,
                               Contents = new List<string> { "E28885" }
                             });
           }
@@ -728,13 +716,14 @@ namespace AvayaPDSEmulator
                           new Message
                             {
                               Command = "AGTReadyNextItem",
-                              Type = Message.MessageType.Response,
+                              Type = MessageType.Response,
                               OrigId = "Agent server",
                               ProcessId = "26621",
                               InvokeId = "0",
                               Contents = new List<string> { "M00000" }
                             });
           }
+
           break;
 
         case "AGTFinishedItem":
@@ -744,7 +733,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTFinishedItem",
-                            Type = Message.MessageType.Pending,
+                            Type = MessageType.Pending,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -754,7 +743,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTFinishedItem",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -769,13 +758,14 @@ namespace AvayaPDSEmulator
                           new Message
                             {
                               Command = "AGTNoFurtherWork",
-                              Type = Message.MessageType.Response,
+                              Type = MessageType.Response,
                               OrigId = "Agent server",
                               ProcessId = "26621",
                               InvokeId = "0",
                               Contents = new List<string> { "M00000" }
                             });
           }
+
           break;
 
         case "AGTNoFurtherWork":
@@ -783,7 +773,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTNoFurtherWork",
-                            Type = Message.MessageType.Pending,
+                            Type = MessageType.Pending,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -798,7 +788,7 @@ namespace AvayaPDSEmulator
                           new Message
                             {
                               Command = "AGTNoFurtherWork",
-                              Type = Message.MessageType.Response,
+                              Type = MessageType.Response,
                               OrigId = "Agent server",
                               ProcessId = "26621",
                               InvokeId = "0",
@@ -809,6 +799,7 @@ namespace AvayaPDSEmulator
           {
             state.IsLeavingJob = true;
           }
+
           break;
 
         case "AGTDetachJob":
@@ -820,7 +811,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTDetachJob",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -828,12 +819,13 @@ namespace AvayaPDSEmulator
                           });
 
           break;
+
         case "AGTDisconnHeadset":
           _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTDisconnHeadset",
-                            Type = Message.MessageType.Pending,
+                            Type = MessageType.Pending,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -843,7 +835,7 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                             Command = "AGTDisconnHeadset",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -856,7 +848,7 @@ namespace AvayaPDSEmulator
                         new Message
                         {
                           Command = "AGTFreeHeadset",
-                          Type = Message.MessageType.Response,
+                          Type = MessageType.Response,
                           OrigId = "Agent server",
                           ProcessId = "26621",
                           InvokeId = "0",
@@ -872,19 +864,19 @@ namespace AvayaPDSEmulator
                         new Message
                           {
                           Command = "AGTListJobs",
-                          Type = Message.MessageType.Data,
+                          Type = MessageType.Data,
                           OrigId = "Agent server",
                           ProcessId = "26621",
                           InvokeId = "0",
-                          //Contents = new List<string> { "M00001", "O,30DHOP1,I", "O,30DHOP2,I", "O,30HOHiP1,I", "O,30HOHiP2,I", "O,5BIHOP1,I", "O,5BIHOP2,I", "B,ACT_blend,I", "O,ACT_outbnd,I", "O,ALW_C1T3SL,I", "O,ALW_C7S1SL,A", "O,ATTE_C1S1,I", "O,ATTE_C1S2,I", "O,ATTE_C1S3,I", "O,ATTE_C1S5,I", "O,ATTE_C1SP,I", "O,ATTE_C1W1,I", "O,AutoTest,I", "B,BLENDCOPY,I", "B,BlendTst,I", "B,GE_JCALLP5,I", "I,InbClosed,I", "O,Matttest,I", "O,NS_OB,I", "O,SX_MSPP1,I", "O,SX_MSPP2,I", "O,SX_MSPWCP1,I", "O,SX_MSPWCP2,I", "O,SX_Mod1,I", "O,SX_Mod1_2,I", "O,SX_ModSkp,I", "I,SallieINB,I", "B,SallieLO,A", "B,SallieSLM,I", "O,Sallie_AM,I", "B,Sallie_Dev,I", "O,SaxCol2LN1,I", "M,SaxCol2LN2,I", "O,SaxColLPS1,I", "O,SaxColLPS2,I", "M,SaxColLST1,I", "O,SaxColLST2,I", "O,SaxColMSPW,I", "O,SaxColPEP1,I", "O,SaxColPEP2,I", "M,SaxColPR31,I", "M,SaxColPR32,I", "M,SaxColPR61,I", "M,SaxColPR62,I", "O,SaxCol_121,I", "O,SaxCol_122,I", "O,SaxCol_31,I", "O,SaxCol_32,I", "O,SaxCol_61,I", "O,SaxCol_62,I", "O,SaxCol_91,I", "O,SaxCol_92,I", "O,SaxCol_FC1,I", "O,SaxCol_FC2,I", "M,SaxCol_L31,I", "M,SaxCol_L32,I", "O,SaxCol_L61,I", "O,SaxCol_L62,I", "M,SaxDev,I", "M,SaxonArm,I", "M,SaxonEsc,I", "O,SaxonII_1,I", "O,SaxonII_2,I", "O,SxonII_Dev,I", "O,UVRE_C7S1,I", "O,UVRSE_C7S1,I", "O,UVRSW_C7S1,A", "O,UVRW_C7S1,A", "O,Uvrs_Dev,I", "B,blend,I", "I,inbnd1,I", "M,managed,I", "O,outbnd,I" }
+                          ////Contents = new List<string> { "M00001", "O,30DHOP1,I", "O,30DHOP2,I", "O,30HOHiP1,I", "O,30HOHiP2,I", "O,5BIHOP1,I", "O,5BIHOP2,I", "B,ACT_blend,I", "O,ACT_outbnd,I", "O,ALW_C1T3SL,I", "O,ALW_C7S1SL,A", "O,ATTE_C1S1,I", "O,ATTE_C1S2,I", "O,ATTE_C1S3,I", "O,ATTE_C1S5,I", "O,ATTE_C1SP,I", "O,ATTE_C1W1,I", "O,AutoTest,I", "B,BLENDCOPY,I", "B,BlendTst,I", "B,GE_JCALLP5,I", "I,InbClosed,I", "O,Matttest,I", "O,NS_OB,I", "O,SX_MSPP1,I", "O,SX_MSPP2,I", "O,SX_MSPWCP1,I", "O,SX_MSPWCP2,I", "O,SX_Mod1,I", "O,SX_Mod1_2,I", "O,SX_ModSkp,I", "I,SallieINB,I", "B,SallieLO,A", "B,SallieSLM,I", "O,Sallie_AM,I", "B,Sallie_Dev,I", "O,SaxCol2LN1,I", "M,SaxCol2LN2,I", "O,SaxColLPS1,I", "O,SaxColLPS2,I", "M,SaxColLST1,I", "O,SaxColLST2,I", "O,SaxColMSPW,I", "O,SaxColPEP1,I", "O,SaxColPEP2,I", "M,SaxColPR31,I", "M,SaxColPR32,I", "M,SaxColPR61,I", "M,SaxColPR62,I", "O,SaxCol_121,I", "O,SaxCol_122,I", "O,SaxCol_31,I", "O,SaxCol_32,I", "O,SaxCol_61,I", "O,SaxCol_62,I", "O,SaxCol_91,I", "O,SaxCol_92,I", "O,SaxCol_FC1,I", "O,SaxCol_FC2,I", "M,SaxCol_L31,I", "M,SaxCol_L32,I", "O,SaxCol_L61,I", "O,SaxCol_L62,I", "M,SaxDev,I", "M,SaxonArm,I", "M,SaxonEsc,I", "O,SaxonII_1,I", "O,SaxonII_2,I", "O,SxonII_Dev,I", "O,UVRE_C7S1,I", "O,UVRSE_C7S1,I", "O,UVRSW_C7S1,A", "O,UVRW_C7S1,A", "O,Uvrs_Dev,I", "B,blend,I", "I,inbnd1,I", "M,managed,I", "O,outbnd,I" }
                           Contents = jobs
-                          //Contents = new List<string> { "M00001", "O,SallieLO,A", "O,JOB2,A" }
+                          ////Contents = new List<string> { "M00001", "O,SallieLO,A", "O,JOB2,A" }
                         });
           _SendMessageToClient(handler,
                         new Message
                           {
                             Command = "AGTListJobs",
-                            Type = Message.MessageType.Response,
+                            Type = MessageType.Response,
                             OrigId = "Agent server",
                             ProcessId = "26621",
                             InvokeId = "0",
@@ -899,7 +891,7 @@ namespace AvayaPDSEmulator
                         new Message
                         {
                           Command = "AGTLogoff",
-                          Type = Message.MessageType.Response,
+                          Type = MessageType.Response,
                           OrigId = "Agent server",
                           ProcessId = "26621",
                           InvokeId = "0",

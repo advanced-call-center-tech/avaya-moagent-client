@@ -20,18 +20,22 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class AttachJob : Message
+  /// <summary>
+  /// AttachJob
+  /// </summary>
+  public class AttachJob : Command
   {
-    private const string COMMAND = "AGTAttachJob";
-
-    public AttachJob(string jobname)
-      : this(jobname, false)
-    { }
-
-    public AttachJob(string jobname, bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage, jobname)
-    { }
+    /// <summary>
+    /// Creates an AttachJob command with the specified job name.
+    /// </summary>
+    /// <param name="jobName"></param>
+    public AttachJob(string jobName)
+      : base("AGTAttachJob", jobName)
+    {
+    }
   }
 }

@@ -20,41 +20,45 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Enumerations;
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class ListJobs : Message
+  /// <summary>
+  /// ListJobs
+  /// </summary>
+  public class ListJobs : Command
   {
-    private const string COMMAND = "AGTListJobs";
+    private const string _COMMAND = "AGTListJobs";
 
-    public enum JobListingType
+    static ListJobs()
     {
-      All = 'A',
-      Inbound = 'I',
-      Blend = 'B',
-      Managed = 'M',
-      Outbound = 'O'
+      All = new ListJobs(JobListingType.All);
     }
 
-    public enum JobStatus
-    {
-      Active = 'A',
-      Inactive = 'I'
-    }
-
+    /// <summary>
+    /// Creates a ListJob command of the specified type.
+    /// </summary>
+    /// <param name="type"></param>
     public ListJobs(JobListingType type)
-      : this(type, false)
-    { }
+      : base(_COMMAND, ((char)type).ToString())
+    {
+    }
 
+    /// <summary>
+    /// Creates a ListJob command with the specified type and status.
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="status"></param>
     public ListJobs(JobListingType type, JobStatus status)
-      : this(type, status, false)
-    { }
+      : base(_COMMAND, ((char)type).ToString(), ((char)status).ToString())
+    {
+    }
 
-    public ListJobs(JobListingType type, bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage, ((char)type).ToString())
-    { }
-
-    public ListJobs(JobListingType type, JobStatus status, bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage, ((char)type).ToString(), ((char)status).ToString())
-    { }
+    /// <summary>
+    /// All
+    /// </summary>
+    public static ListJobs All { get; private set; }
   }
 }

@@ -21,18 +21,17 @@
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Windows;
 
-namespace AvayaTestClient
+namespace AvayaMoagentClient.Messages
 {
   /// <summary>
-  /// Interaction logic for App
+  /// MessageSentEventArgs
   /// </summary>
-  public partial class App : Application
+  public class MessageSentEventArgs : EventArgs
   {
+    /// <summary>
+    /// Message.
+    /// </summary>
+    public Message Message { get; set; }
   }
 }

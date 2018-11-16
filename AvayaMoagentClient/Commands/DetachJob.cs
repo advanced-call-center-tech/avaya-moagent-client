@@ -20,19 +20,31 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class DetachJob : Message
+  /// <summary>
+  /// DetachJob
+  /// </summary>
+  public class DetachJob : Command
   {
-    private const string COMMAND = "AGTDetachJob";
+    static DetachJob()
+    {
+      Default = new DetachJob();
+    }
 
+    /// <summary>
+    /// Default constructor
+    /// </summary>
     public DetachJob()
-      : this(false)
-    { }
+      : base("AGTDetachJob")
+    {
+    }
 
-    public DetachJob(bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage)
-    { }
+    /// <summary>
+    /// Default
+    /// </summary>
+    public static DetachJob Default { get; private set; }
   }
 }
-

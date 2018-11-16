@@ -20,26 +20,42 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class TransferCall : Message
+  /// <summary>
+  /// TransferCall
+  /// </summary>
+  public class TransferCall : Command
   {
-    private const string COMMAND = "AGTTransferCall";
+    private const string _COMMAND = "AGTTransferCall";
 
-    public TransferCall()
-        : this(false)
-    { }
+    static TransferCall()
+    {
+      Default = new TransferCall();
+    }
     
+    /// <summary>
+    /// Default constructor
+    /// </summary>
+    public TransferCall()
+      : base(_COMMAND)
+    {
+    }
+
+    /// <summary>
+    /// Creates a TransferCall command with the specified phone number.
+    /// </summary>
+    /// <param name="phoneNumber"></param>
     public TransferCall(string phoneNumber)
-      : this(phoneNumber, false)
-    { }
+      : base(_COMMAND, phoneNumber)
+    {
+    }
 
-    public TransferCall(bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage)
-    { }
-
-    public TransferCall(string phoneNumber, bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage, phoneNumber)
-    { }
+    /// <summary>
+    /// Default
+    /// </summary>
+    public static TransferCall Default { get; private set; }
   }
 }

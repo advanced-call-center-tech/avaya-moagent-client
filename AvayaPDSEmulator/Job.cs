@@ -20,19 +20,48 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Windows;
-
-namespace AvayaTestClient
+namespace AvayaPDSEmulator
 {
+  using System;
+  using System.Collections.Generic;
+  using System.Linq;
+  using System.Text;
+
   /// <summary>
-  /// Interaction logic for App
+  /// Job
   /// </summary>
-  public partial class App : Application
+  public class Job
   {
+    /// <summary>
+    /// Creates a Job object with the specified type and name.
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="name"></param>
+    public Job(JobType type, string name)
+    {
+      Type = type;
+      JobName = name;
+    }
+
+    /// <summary>
+    /// JobType
+    /// </summary>
+    public enum JobType
+    {
+      Inbound = 'I',
+      Outbound = 'O',
+      Managed = 'M',
+      Blend = 'B'
+    }
+
+    /// <summary>
+    /// Type
+    /// </summary>
+    public JobType Type { get; set; }
+
+    /// <summary>
+    /// JobName
+    /// </summary>
+    public string JobName { get; set; }
   }
 }

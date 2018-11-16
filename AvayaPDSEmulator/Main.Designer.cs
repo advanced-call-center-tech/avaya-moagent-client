@@ -94,7 +94,7 @@
       this.btnStop.TabIndex = 1;
       this.btnStop.Text = "Stop Server";
       this.btnStop.UseVisualStyleBackColor = true;
-      this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
+      this.btnStop.Click += new System.EventHandler(this.Stop_Click);
       // 
       // btnStart
       // 
@@ -105,7 +105,7 @@
       this.btnStart.TabIndex = 0;
       this.btnStart.Text = "Start Server";
       this.btnStart.UseVisualStyleBackColor = true;
-      this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
+      this.btnStart.Click += new System.EventHandler(this.Start_Click);
       // 
       // tbpConfigureServer
       // 
@@ -161,7 +161,7 @@
       this.txtSeconds.Size = new System.Drawing.Size(33, 21);
       this.txtSeconds.TabIndex = 6;
       this.txtSeconds.Text = "10";
-      this.txtSeconds.TextChanged += new System.EventHandler(this.txtSeconds_TextChanged);
+      this.txtSeconds.TextChanged += new System.EventHandler(this.Seconds_TextChanged);
       // 
       // chkRepeat
       // 
@@ -172,7 +172,7 @@
       this.chkRepeat.TabIndex = 5;
       this.chkRepeat.Text = "Repeat to available agents every";
       this.chkRepeat.UseVisualStyleBackColor = true;
-      this.chkRepeat.CheckedChanged += new System.EventHandler(this.chkRepeat_CheckedChanged);
+      this.chkRepeat.CheckedChanged += new System.EventHandler(this.Repeat_CheckedChanged);
       // 
       // btnSendCall
       // 
@@ -184,7 +184,7 @@
       this.btnSendCall.TabIndex = 4;
       this.btnSendCall.Text = "Send Call";
       this.btnSendCall.UseVisualStyleBackColor = true;
-      this.btnSendCall.Click += new System.EventHandler(this.btnSendCall_Click);
+      this.btnSendCall.Click += new System.EventHandler(this.SendCall_Click);
       // 
       // lblFields
       // 
@@ -284,7 +284,7 @@
       this.btnRemove.TabIndex = 4;
       this.btnRemove.Text = "Remove";
       this.btnRemove.UseVisualStyleBackColor = true;
-      this.btnRemove.Click += new System.EventHandler(this.btnRemove_Click);
+      this.btnRemove.Click += new System.EventHandler(this.Remove_Click);
       // 
       // btnAdd
       // 
@@ -294,7 +294,7 @@
       this.btnAdd.TabIndex = 2;
       this.btnAdd.Text = "Add";
       this.btnAdd.UseVisualStyleBackColor = true;
-      this.btnAdd.Click += new System.EventHandler(this.btnAdd_Click);
+      this.btnAdd.Click += new System.EventHandler(this.Add_Click);
       // 
       // txtJobName
       // 
@@ -302,7 +302,7 @@
       this.txtJobName.Name = "txtJobName";
       this.txtJobName.Size = new System.Drawing.Size(144, 21);
       this.txtJobName.TabIndex = 1;
-      this.txtJobName.TextChanged += new System.EventHandler(this.txtJobName_TextChanged);
+      this.txtJobName.TextChanged += new System.EventHandler(this.JobName_TextChanged);
       // 
       // lstJobs
       // 
@@ -322,7 +322,7 @@
       this.lstJobs.Name = "lstJobs";
       this.lstJobs.Size = new System.Drawing.Size(144, 342);
       this.lstJobs.TabIndex = 3;
-      this.lstJobs.SelectedIndexChanged += new System.EventHandler(this.lstJobs_SelectedIndexChanged);
+      this.lstJobs.SelectedIndexChanged += new System.EventHandler(this.Jobs_SelectedIndexChanged);
       // 
       // btnDisconnect
       // 
@@ -333,7 +333,7 @@
       this.btnDisconnect.TabIndex = 3;
       this.btnDisconnect.Text = "Disconnect";
       this.btnDisconnect.UseVisualStyleBackColor = true;
-      this.btnDisconnect.Click += new System.EventHandler(this.btnDisconnect_Click);
+      this.btnDisconnect.Click += new System.EventHandler(this.Disconnect_Click);
       // 
       // btnConnect
       // 
@@ -344,7 +344,7 @@
       this.btnConnect.TabIndex = 2;
       this.btnConnect.Text = "Connect";
       this.btnConnect.UseVisualStyleBackColor = true;
-      this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
+      this.btnConnect.Click += new System.EventHandler(this.Connect_Click);
       // 
       // txtIP
       // 

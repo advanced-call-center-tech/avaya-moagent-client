@@ -21,11 +21,18 @@
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-namespace AvayaMoagentClient
+namespace AvayaMoagentClient.Enumerations
 {
-  public class MessageReceivedEventArgs : EventArgs
+  /// <summary>
+  /// JobStatus
+  /// </summary>
+  public enum JobStatus
   {
-    public Message Message { get; set; }
+    Active = 'A',
+    Inactive = 'I'
   }
 }

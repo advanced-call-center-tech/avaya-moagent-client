@@ -51,11 +51,11 @@
     <Compile Include="Commands\AvailableWork.cs" />
     <Compile Include="Commands\AttachJob.cs" />
     <Compile Include="AvayaDialer.cs" />
-    <Compile Include="Commands\CommandCache.cs" />
+    <Compile Include="Commands\Command.cs" />
     <Compile Include="Commands\ConnectHeadset.cs" />
     <Compile Include="Commands\SetPassword.cs" />
     <Compile Include="Commands\ManagedCall.cs" />
-    <Compile Include="Commands\HangupCall.cs" />
+    <Compile Include="Commands\HangUpCall.cs" />
     <Compile Include="Commands\TransferCall.cs" />
     <Compile Include="Commands\SetDataField.cs" />
     <Compile Include="Commands\DisconnectHeadset.cs" />
@@ -67,11 +67,14 @@
     <Compile Include="Commands\DetachJob.cs" />
     <Compile Include="Commands\FinishedItem.cs" />
     <Compile Include="Commands\FreeHeadset.cs" />
-    <Compile Include="MessageSentEventArgs.cs" />
-    <Compile Include="Enums\FieldListType.cs" />
-    <Compile Include="Enums\WorkClass.cs" />
-    <Compile Include="Message.cs" />
-    <Compile Include="MessageReceivedEventArgs.cs" />
+    <Compile Include="Enumerations\JobListingType.cs" />
+    <Compile Include="Enumerations\JobStatus.cs" />
+    <Compile Include="Messages\MessageSentEventArgs.cs" />
+    <Compile Include="Enumerations\FieldListType.cs" />
+    <Compile Include="Enumerations\WorkClass.cs" />
+    <Compile Include="Messages\Message.cs" />
+    <Compile Include="Messages\MessageReceivedEventArgs.cs" />
+    <Compile Include="Enumerations\MessageType.cs" />
     <Compile Include="MoagentClient.cs" />
     <Compile Include="Commands\NoFurtherWork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -79,10 +82,9 @@
     <Compile Include="Commands\ReleaseLine.cs" />
     <Compile Include="Commands\SetWorkClass.cs" />
     <Compile Include="Commands\SetNotifyKeyField.cs" />
+    <Compile Include="StateObject.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Messages\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>

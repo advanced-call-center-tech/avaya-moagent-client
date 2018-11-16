@@ -20,18 +20,31 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class HangupCall : Message
+  /// <summary>
+  /// HangUpCall
+  /// </summary>
+  public class HangUpCall : Command
   {
-    private const string COMMAND = "AGTHangupCall";
+    static HangUpCall()
+    {
+      Default = new HangUpCall();
+    }
 
-    public HangupCall()
-      : this(false)
-    { }
+    /// <summary>
+    /// Default constructor
+    /// </summary>
+    public HangUpCall()
+      : base("AGTHangupCall")
+    {
+    }
 
-    public HangupCall(bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage)
-    { }
+    /// <summary>
+    /// Default
+    /// </summary>
+    public static HangUpCall Default { get; private set; }
   }
 }

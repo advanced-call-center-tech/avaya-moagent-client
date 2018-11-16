@@ -20,20 +20,23 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using AvayaMoagentClient.Enums;
+using AvayaMoagentClient.Enumerations;
+using AvayaMoagentClient.Messages;
 
 namespace AvayaMoagentClient.Commands
 {
-  public class SetWorkClass : Message
+  /// <summary>
+  /// SetWorkClass
+  /// </summary>
+  public class SetWorkClass : Command
   {
-    private const string COMMAND = "AGTSetWorkClass";
-
+    /// <summary>
+    /// Creates a SetWorkClass command with the specified work class.
+    /// </summary>
+    /// <param name="workClass"></param>
     public SetWorkClass(WorkClass workClass)
-      : this(workClass, false)
-    { }
-
-    public SetWorkClass(WorkClass workClass, bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage, ((char)workClass).ToString())
-    { }
+      : base("AGTSetWorkClass", ((char)workClass).ToString())
+    {
+    }
   }
 }

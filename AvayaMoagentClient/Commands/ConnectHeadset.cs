@@ -20,18 +20,31 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class ConnectHeadset : Message
+  /// <summary>
+  /// ConnectHeadset
+  /// </summary>
+  public class ConnectHeadset : Command
   {
-    private const string COMMAND = "AGTConnHeadset";
+    static ConnectHeadset()
+    {
+      Default = new ConnectHeadset();
+    }
 
+    /// <summary>
+    /// Default constructor
+    /// </summary>
     public ConnectHeadset()
-        : this(false)
-    {}
+      : base("AGTConnHeadset")
+    {
+    }
 
-    public ConnectHeadset(bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage)
-    {}
+    /// <summary>
+    /// Default
+    /// </summary>
+    public static ConnectHeadset Default { get; private set; }
   }
 }

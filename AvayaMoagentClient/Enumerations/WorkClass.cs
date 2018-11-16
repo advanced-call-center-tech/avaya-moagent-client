@@ -20,23 +20,18 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-namespace AvayaMoagentClient.Commands
+namespace AvayaMoagentClient.Enumerations
 {
-  public static class CommandCache
+  /// <summary>
+  /// WorkClass
+  /// </summary>
+  public enum WorkClass
   {
-    public static AvailableWork AvailableWork = new AvailableWork(true);
-    public static ReadyNextItem ReadyNextItem = new ReadyNextItem(true);
-    public static HangupCall HangupCall = new HangupCall(true);
-    public static ReleaseLine ReleaseLine = new ReleaseLine(true);
-    public static NoFurtherWork NoFurtherWork = new NoFurtherWork(true);
-    public static DetachJob DetachJob = new DetachJob(true);
-    public static FreeHeadset FreeHeadset = new FreeHeadset(true);
-    public static ConnectHeadset ConnectHeadset = new ConnectHeadset(true);
-    public static TransferCall TransferCall = new TransferCall(true);
-    public static ManagedCall ManagedCall = new ManagedCall(true);
-    public static ListJobs ListAllJobs = new ListJobs(ListJobs.JobListingType.All, true);
-    public static ListState ListState = new ListState(true);
-    public static DisconnectHeadset DisconnectHeadset = new DisconnectHeadset(true);
-    public static Logoff LogOff = new Logoff(true);
+    Undefined = 'U',
+    Inbound = 'I',
+    Outbound = 'O',
+    Blend = 'B',
+    PersonToPerson = 'P',
+    Managed = 'M'
   }
 }

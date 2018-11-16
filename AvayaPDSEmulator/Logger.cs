@@ -32,8 +32,15 @@ namespace AvayaPDSEmulator
   /// </summary>
   public static class Logging
   {
+    /// <summary>
+    /// EventLogged
+    /// </summary>
     public static event EventHandler<LogEventArgs> EventLogged;
 
+    /// <summary>
+    /// LogEvent
+    /// </summary>
+    /// <param name="message"></param>
     public static void LogEvent(string message)
     {
       if (EventLogged != null)

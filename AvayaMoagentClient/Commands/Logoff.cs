@@ -20,18 +20,31 @@
 //WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using AvayaMoagentClient.Messages;
+
 namespace AvayaMoagentClient.Commands
 {
-  public class Logoff : Message
+  /// <summary>
+  /// Logoff
+  /// </summary>
+  public class Logoff : Command
   {
-    private const string COMMAND = "AGTLogoff";
+    static Logoff()
+    {
+      Default = new Logoff();
+    }
 
+    /// <summary>
+    /// Default constructor
+    /// </summary>
     public Logoff()
-      : this(false)
-    { }
+      : base("AGTLogoff")
+    {
+    }
 
-    public Logoff(bool cacheRawMessage)
-      : base(COMMAND, MessageType.Command, cacheRawMessage)
-    { }
+    /// <summary>
+    /// Default
+    /// </summary>
+    public static Logoff Default { get; private set; }
   }
 }

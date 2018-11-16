@@ -23,128 +23,281 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using AvayaMoagentClient.Enumerations;
+using AvayaMoagentClient.Messages;
 using OpenSSL;
 using OpenSSL.Core;
 using OpenSSL.X509;
 
 namespace AvayaMoagentClient
 {
+  /// <summary>
+  /// MoagentClient
+  /// </summary>
+  [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "Reviewed.")]
   public class MoagentClient
   {
-    // State object for receiving data from remote device.
-    private sealed class StateObject
-    {
-      public Socket Stream { get; set; }
-      public SslStream SecureStream { get; set; }
-      public const int BufferSize = 256;
-      public byte[] Buffer = new byte[BufferSize];
-      public StringBuilder sb = new StringBuilder();
-    }
+    private const string _DEFAULT_AVAYA_CLIENT_CERT_PATH = @".\agentClientCert.p12";
+    private const string _DEFAULT_AVAYA_CERT_PATH = @".\ProactiveContactCA.cer";
 
-    private int _invokeIdSequence = 1;
-    private readonly Socket _client;
-    private SslStream _sslWrapper;
     private readonly string _server;
     private readonly int _port;
     private readonly bool _useSsl;
-    private readonly X509List _xList;
-    private readonly X509Chain _xChain;
+    private readonly Socket _client;
 
-    public delegate void MessageSentHandler(object sender, MessageSentEventArgs e);
-    public delegate void MessageReceivedHandler(object sender, MessageReceivedEventArgs e);
-    public delegate void DisconnectedHandler(object sender, EventArgs e);
+    private int _nextInvokeId = 1;
 
-    public event EventHandler ConnectComplete;
-    public event MessageSentHandler MessageSent;
-    public event MessageReceivedHandler MessageReceived;
-    public event DisconnectedHandler Disconnected;
+    private SslStream _secureClient;
 
-    public MoagentClient(string host, int port): this(host, port, false)
+    /// <summary>
+    /// Creates a non-SSL MoagentClient object for the specified host and port.
+    /// </summary>
+    /// <param name="host"></param>
+    /// <param name="port"></param>
+    public MoagentClient(string host, int port)
+      : this(host, port, false)
     {
     }
-    
+
+    /// <summary>
+    /// Creates a MoagentClient object for the specified host, port, and SSL setting.
+    /// </summary>
+    /// <param name="host"></param>
+    /// <param name="port"></param>
+    /// <param name="useSsl"></param>
     public MoagentClient(string host, int port, bool useSsl)
     {
+      X509Certificate clientCert;
+      X509Certificate serverCert;
+
       _server = host;
       _port = port;
       _useSsl = useSsl;
-      _client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+      AvayaCertificatePath = _DEFAULT_AVAYA_CERT_PATH;
+      AvayaClientCertificatePath = _DEFAULT_AVAYA_CLIENT_CERT_PATH;
 
-      if (_useSsl)
+      try
       {
-        var certBio = BIO.File(@".\agentClientCert.p12", "r");
-        X509Certificate clientCert = X509Certificate.FromPKCS12(certBio, string.Empty);
-        var serverBio = BIO.File(@".\ProactiveContactCA.cer", "r");
-        X509Certificate serverCert = X509Certificate.FromDER(serverBio);
+        _client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-        _xList = new X509List {clientCert};
-        _xChain = new X509Chain {serverCert};
+        if (_useSsl)
+        {
+          try
+          {
+            var certBio = BIO.File(AvayaClientCertificatePath, "r");
+            clientCert = X509Certificate.FromPKCS12(certBio, string.Empty);
+          }
+          catch (Exception ex)
+          {
+            throw new FileLoadException("Unable to load Avaya client certificate file", AvayaClientCertificatePath, ex);
+          }
+
+          try
+          {
+            var serverBio = BIO.File(AvayaCertificatePath, "r");
+            serverCert = X509Certificate.FromDER(serverBio);
+          }
+          catch (Exception ex)
+          {
+            throw new FileLoadException("Unable to load Avaya certificate file", AvayaCertificatePath, ex);
+          }
+
+          CertificateList = new X509List { clientCert };
+          CertificateChain = new X509Chain { serverCert };
+        }
+      }
+      catch (TypeInitializationException tex)
+      {
+        throw tex.InnerException;
       }
     }
 
-    public bool Connected
+    /// <summary>
+    /// MessageSentHandler
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    public delegate void MessageSentHandler(object sender, MessageSentEventArgs e);
+
+    /// <summary>
+    /// MessageReceivedHandler
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    public delegate void MessageReceivedHandler(object sender, MessageReceivedEventArgs e);
+
+    /// <summary>
+    /// DisconnectedHandler
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    public delegate void DisconnectedHandler(object sender, EventArgs e);
+
+    /// <summary>
+    /// Connected
+    /// </summary>
+    public event EventHandler Connected;
+
+    /// <summary>
+    /// MessageSent
+    /// </summary>
+    public event MessageSentHandler MessageSent;
+
+    /// <summary>
+    /// MessageReceived
+    /// </summary>
+    public event MessageReceivedHandler MessageReceived;
+
+    /// <summary>
+    /// Disconnected
+    /// </summary>
+    public event DisconnectedHandler Disconnected;
+
+    /// <summary>
+    /// CertificateChain
+    /// </summary>
+    [CLSCompliant(false)]
+    public X509Chain CertificateChain { get; private set; }
+
+    /// <summary>
+    /// CertificateList
+    /// </summary>
+    [CLSCompliant(false)]
+    public X509List CertificateList { get; private set; }
+
+    /// <summary>
+    /// AvayaClientCertificatePath
+    /// </summary>
+    public string AvayaClientCertificatePath { get; set; }
+
+    /// <summary>
+    /// AvayaCertificatePath
+    /// </summary>
+    public string AvayaCertificatePath { get; set; }
+
+    /// <summary>
+    /// IsConnected
+    /// </summary>
+    public bool IsConnected
     {
-      get { return ((!_useSsl || _sslWrapper != null) && _client != null && _client.Connected); }
+      get
+      {
+        var ret = false;
+
+        if (_useSsl)
+        {
+          ret = (_secureClient != null);
+        }
+        else
+        {
+          ret = (_client != null && _client.Connected);
+        }
+
+        return ret;
+      }
     }
 
-    public void StartConnectAsync()
+    /// <summary>
+    /// StartConnect
+    /// </summary>
+    public void StartConnect()
     {
       var ip = IPAddress.Parse(_server);
       var remoteEp = new IPEndPoint(ip, _port);
-      _client.BeginConnect(remoteEp, ConnectCallback, _client);
+
+      _client.BeginConnect(remoteEp, _ConnectCallback, _client);
     }
 
-    private void ConnectCallback(IAsyncResult ar)
+    /// <summary>
+    /// Send
+    /// </summary>
+    /// <param name="cmd"></param>
+    public void Send(Commands.Command cmd)
+    {
+      var msg = Message.FromCommand(cmd);
+      msg.InvokeId = (_nextInvokeId++).ToString();
+
+      Send(msg);
+    }
+
+    /// <summary>
+    /// Send
+    /// </summary>
+    /// <param name="msg"></param>
+    public void Send(Message msg)
+    {
+      byte[] byteData = Encoding.ASCII.GetBytes(msg.RawMessage);
+
+      // Begin sending the data to the remote device.
+      if (_useSsl)
+      {
+        _secureClient.BeginWrite(byteData, 0, byteData.Length, _SecureSendCallback, msg);
+      }
+      else
+      {
+        _client.BeginSend(byteData, 0, byteData.Length, 0, _SendCallback, msg);
+      }
+    }
+
+    /// <summary>
+    /// Disconnect
+    /// </summary>
+    public void Disconnect()
+    {
+      if (_secureClient != null)
+      {
+        _secureClient.Close();
+        _secureClient.Dispose();
+        _secureClient = null;
+      }
+
+      if (_client.Connected)
+      {
+        _client.Close();
+      }
+
+      if (Disconnected != null)
+      {
+        Disconnected(this, EventArgs.Empty);
+      }
+    }
+
+    private void _ConnectCallback(IAsyncResult ar)
     {
       var client = (Socket)ar.AsyncState;
-
       client.EndConnect(ar);
 
       if (_useSsl)
       {
         var stream = new NetworkStream(_client, FileAccess.ReadWrite, true);
-        _sslWrapper = new SslStream(stream, false, ValidateRemoteCert, clientCertificateSelectionCallback);
+        _secureClient = new SslStream(stream, false, _ValidateRemoteCert, _ClientCertificateSelectionCallback);
 
-        _sslWrapper.AuthenticateAsClient(_server, _xList, _xChain, SslProtocols.Default, SslStrength.All, false);
+        _secureClient.AuthenticateAsClient(_server, CertificateList, CertificateChain, SslProtocols.Default, SslStrength.All, false);
 
-        SecureReceive(_sslWrapper);
+        _SecureReceive(_secureClient);
       }
       else
       {
-        Receive(client);
+        _Receive(client);
       }
 
-      if (ConnectComplete != null)
-        ConnectComplete(this, EventArgs.Empty);
-    }
-
-    public void Disconnect()
-    {
-      if (_sslWrapper != null)
+      if (Connected != null)
       {
-        _sslWrapper.Close();
-        _sslWrapper.Dispose();
-        _sslWrapper = null;
+        Connected(this, EventArgs.Empty);
       }
-
-      if (_client.Connected)
-        _client.Close();
-
-      if (Disconnected != null)
-        Disconnected(this, EventArgs.Empty);
     }
 
-    private void Receive(Socket client)
+    private void _Receive(Socket client)
     {
       try
       {
-        var state = new StateObject {Stream = client};
-
-        client.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, ReceiveCallback, state);
+        var state = new StateObject { Stream = client };
+        client.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, _ReceiveCallback, state);
       }
       catch (Exception e)
       {
@@ -152,13 +305,13 @@ namespace AvayaMoagentClient
       }
     }
 
-    private void SecureReceive(SslStream client)
+    private void _SecureReceive(SslStream client)
     {
       try
       {
-        var state = new StateObject {SecureStream = client};
+        var state = new StateObject { SecureStream = client };
 
-        client.BeginRead(state.Buffer, 0, StateObject.BufferSize, SecureReceiveCallback, state);
+        client.BeginRead(state.Buffer, 0, StateObject.BufferSize, _SecureReceiveCallback, state);
       }
       catch (Exception e)
       {
@@ -166,7 +319,7 @@ namespace AvayaMoagentClient
       }
     }
 
-    private void ReceiveCallback(IAsyncResult ar)
+    private void _ReceiveCallback(IAsyncResult ar)
     {
       string content;
 
@@ -186,10 +339,10 @@ namespace AvayaMoagentClient
           if (bytesRead > 0)
           {
             // There  might be more data, so store the data received so far.
-            state.sb.Append(Encoding.ASCII.GetString(state.Buffer, 0, bytesRead));
+            state.StringBuilder.Append(Encoding.ASCII.GetString(state.Buffer, 0, bytesRead));
 
             // Check for end-of-file tag. If it is not there, read more data.
-            content = state.sb.ToString();
+            content = state.StringBuilder.ToString();
             if (content.IndexOf((char)3) > -1)
             {
               var msgs = new List<string>();
@@ -198,7 +351,9 @@ namespace AvayaMoagentClient
               foreach (var ch in content)
               {
                 if (ch != (char)3)
+                {
                   msg.Append(ch);
+                }
                 else
                 {
                   msg.Append(ch);
@@ -207,17 +362,19 @@ namespace AvayaMoagentClient
                 }
               }
 
-              state.sb.Length = 0;
-              state.sb.Append(msg.ToString());
+              state.StringBuilder.Length = 0;
+              state.StringBuilder.Append(msg.ToString());
 
               lastMsg = _LogMessagesReceived(msgs);
             }
           }
 
           if (!(lastMsg != null &&
-                lastMsg.Type == Message.MessageType.Response &&
-                lastMsg.Command.Trim() == "AGTLogoff"))
-            handler.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, ReceiveCallback, state);
+                lastMsg.Type == MessageType.Response &&
+                lastMsg.Command.Trim() == Commands.Logoff.Default.Cmd))
+          {
+            handler.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, _ReceiveCallback, state);
+          }
         }
       }
       catch (IOException)
@@ -238,7 +395,7 @@ namespace AvayaMoagentClient
       }
     }
 
-    private void SecureReceiveCallback(IAsyncResult ar)
+    private void _SecureReceiveCallback(IAsyncResult ar)
     {
       string content;
 
@@ -254,15 +411,15 @@ namespace AvayaMoagentClient
         {
           // Read data from the remote device.
           int bytesRead = handler.EndRead(ar);
-          //int bytesRead = handler.EndReceive(ar);
+          ////int bytesRead = handler.EndReceive(ar);
 
           if (bytesRead > 0)
           {
-            // There  might be more data, so store the data received so far.
-            state.sb.Append(Encoding.ASCII.GetString(state.Buffer, 0, bytesRead));
+            // There might be more data, so store the data received so far.
+            state.StringBuilder.Append(Encoding.ASCII.GetString(state.Buffer, 0, bytesRead));
 
             // Check for end-of-file tag. If it is not there, read more data.
-            content = state.sb.ToString();
+            content = state.StringBuilder.ToString();
             if (content.IndexOf((char)3) > -1)
             {
               var msgs = new List<string>();
@@ -271,7 +428,9 @@ namespace AvayaMoagentClient
               foreach (var ch in content)
               {
                 if (ch != (char)3)
+                {
                   msg.Append(ch);
+                }
                 else
                 {
                   msg.Append(ch);
@@ -280,17 +439,19 @@ namespace AvayaMoagentClient
                 }
               }
 
-              state.sb.Length = 0;
-              state.sb.Append(msg.ToString());
+              state.StringBuilder.Length = 0;
+              state.StringBuilder.Append(msg.ToString());
 
               lastMsg = _LogMessagesReceived(msgs);
             }
           }
 
-          if (!(lastMsg != null && 
-                lastMsg.Type == Message.MessageType.Response && 
-                lastMsg.Command.Trim() == "AGTLogoff"))
-            handler.BeginRead(state.Buffer, 0, StateObject.BufferSize, SecureReceiveCallback, state);
+          if (!(lastMsg != null &&
+                lastMsg.Type == MessageType.Response &&
+                lastMsg.Command.Trim() == Commands.Logoff.Default.Cmd))
+          {
+            handler.BeginRead(state.Buffer, 0, StateObject.BufferSize, _SecureReceiveCallback, state);
+          }
         }
       }
       catch (IOException)
@@ -319,45 +480,25 @@ namespace AvayaMoagentClient
       {
         lastMsg = Message.ParseMessage(msg);
         if (MessageReceived != null)
+        {
           MessageReceived(this, new MessageReceivedEventArgs { Message = lastMsg });
+        }
       }
 
       return lastMsg;
     }
 
-    public void Send(Message data)
-    {
-      data.InvokeId = (_invokeIdSequence++).ToString();
-      if (MessageSent != null)
-        MessageSent(this, new MessageSentEventArgs { Message = data });
-
-      Send(data.RawMessage);
-    }
-
-    private void Send(string data)
-    {
-      byte[] byteData = Encoding.ASCII.GetBytes(data);
-
-      // Begin sending the data to the remote device.
-      //TODO: Pick secure vs nonsecure send
-      if (_useSsl)
-      {
-        _sslWrapper.BeginWrite(byteData, 0, byteData.Length, SecureSendCallback, _sslWrapper);  
-      }
-      else
-      {
-        _client.BeginSend(byteData, 0, byteData.Length, 0, SendCallback, _client);
-      }
-    }
-
-    private void SendCallback(IAsyncResult ar)
+    private void _SendCallback(IAsyncResult ar)
     {
       try
       {
-        // Retrieve the socket from the state object.
-        var client = (Socket)ar.AsyncState;
-        client.EndSend(ar);
-        //TODO: Tell somebody?
+        var message = (Message)ar.AsyncState;
+        _client.EndSend(ar);
+
+        if (MessageSent != null)
+        {
+          MessageSent(this, new MessageSentEventArgs { Message = message });
+        }
       }
       catch (IOException)
       {
@@ -371,24 +512,27 @@ namespace AvayaMoagentClient
         //TODO: log the exception details?
         Disconnect();
       }
-      catch (Exception e)
+      catch (Exception)
       {
-        Console.WriteLine(e.ToString());
+        Debugger.Break();
       }
     }
 
-    private void SecureSendCallback(IAsyncResult ar)
+    private void _SecureSendCallback(IAsyncResult ar)
     {
       try
       {
-        // Retrieve the socket from the state object.
-        var client = (SslStream)ar.AsyncState;
-        client.EndWrite(ar);
-        //TODO: Tell somebody?
+        var message = (Message)ar.AsyncState;
+        _secureClient.EndWrite(ar);
+
+        if (MessageSent != null)
+        {
+          MessageSent(this, new MessageSentEventArgs { Message = message });
+        }
       }
       catch (IOException)
       {
-        //something in the transport leyer has failed, such as the network connection died
+        //something in the transport layer has failed, such as the network connection died
         //TODO: log the exception details?
         Disconnect();
       }
@@ -398,13 +542,13 @@ namespace AvayaMoagentClient
         //TODO: log the exception details?
         Disconnect();
       }
-      catch (Exception e)
+      catch (Exception)
       {
-        Console.WriteLine(e.ToString());
+        Debugger.Break();
       }
     }
 
-    bool ValidateRemoteCert(object obj, X509Certificate cert, X509Chain chain, int depth, VerifyResult result)
+    private bool _ValidateRemoteCert(object obj, X509Certificate cert, X509Chain chain, int depth, VerifyResult result)
     {
       bool ret = false;
 
@@ -416,12 +560,13 @@ namespace AvayaMoagentClient
         case VerifyResult.X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
           {
             // Check the chain to see if there is a match for the cert
-            ret = CheckCert(cert, chain);
+            ret = _CheckCert(cert, chain);
             if (!ret && depth != 0)
             {
               ret = true;  // We want to keep checking until we get to depth 0
             }
           }
+
           break;
         case VerifyResult.X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
         case VerifyResult.X509_V_ERR_CERT_NOT_YET_VALID:
@@ -429,6 +574,7 @@ namespace AvayaMoagentClient
             Console.WriteLine("Certificate is not valid yet");
             ret = false;
           }
+
           break;
         case VerifyResult.X509_V_ERR_CERT_HAS_EXPIRED:
         case VerifyResult.X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
@@ -436,38 +582,43 @@ namespace AvayaMoagentClient
             Console.WriteLine("Certificate is expired");
             ret = false;
           }
+
           break;
         case VerifyResult.X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
           {
             // we received a self signed cert - check to see if it's in our store
-            ret = CheckCert(cert, chain);
+            ret = _CheckCert(cert, chain);
           }
+
           break;
         case VerifyResult.X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
           {
             // A self signed certificate was encountered in the chain
             // Check the chain to see if there is a match for the cert
-            ret = CheckCert(cert, chain);
+            ret = _CheckCert(cert, chain);
             if (!ret && depth != 0)
             {
               ret = true;  // We want to keep checking until we get to depth 0
             }
           }
+          
           break;
         case VerifyResult.X509_V_OK:
           {
             ret = true;
           }
+
           break;
       }
+
       return ret;
     }
 
-    private X509Certificate clientCertificateSelectionCallback(object sender, string targetHost, X509List localCerts, X509Certificate remoteCert, string[] acceptableIssuers)
+    private X509Certificate _ClientCertificateSelectionCallback(object sender, string targetHost, X509List localCerts, X509Certificate remoteCert, string[] acceptableIssuers)
     {
       X509Certificate retCert = null;
 
-      // check target host?
+      //// check target host?
 
       for (var i = 0; i < acceptableIssuers.GetLength(0); i++)
       {
@@ -480,14 +631,17 @@ namespace AvayaMoagentClient
             retCert = cert;
             break;
           }
+
           cert.Dispose();
         }
+
         name.Dispose();
       }
+
       return retCert;
     }
 
-    bool CheckCert(X509Certificate cert, X509Chain chain)
+    private bool _CheckCert(X509Certificate cert, X509Chain chain)
     {
       if (cert == null || chain == null)
       {
