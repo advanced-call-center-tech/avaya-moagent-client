@@ -29,7 +29,7 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class TransferCall : Command
   {
-    private const string _COMMAND = "AGTTransferCall";
+    public const string Name = "AGTTransferCall";
 
     static TransferCall()
     {
@@ -40,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public TransferCall()
-      : base(_COMMAND)
+      : base(Name)
     {
     }
 
@@ -49,7 +49,7 @@ namespace AvayaMoagentClient.Commands
     /// </summary>
     /// <param name="phoneNumber"></param>
     public TransferCall(string phoneNumber)
-      : base(_COMMAND, phoneNumber)
+      : base(Name, phoneNumber)
     {
     }
 

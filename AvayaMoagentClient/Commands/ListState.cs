@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class ListState : Command
   {
+    public const string Name = "AGTListState";
+
     static ListState()
     {
       Default = new ListState();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public ListState()
-      : base("AGTListState")
+      : base(Name)
     {
     }
 

@@ -29,12 +29,14 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class FinishedItem : Command
   {
+    public const string Name = "AGTFinishedItem";
+
     /// <summary>
     /// Creates a FinishedItem command with the specified completion code.
     /// </summary>
     /// <param name="completionCode"></param>
     public FinishedItem(string completionCode)
-      : base("AGTFinishedItem", completionCode)
+      : base(Name, completionCode)
     {
     }
   }

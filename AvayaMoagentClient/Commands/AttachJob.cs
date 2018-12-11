@@ -29,12 +29,14 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class AttachJob : Command
   {
+    public const string Name = "AGTAttachJob";
+
     /// <summary>
     /// Creates an AttachJob command with the specified job name.
     /// </summary>
     /// <param name="jobName"></param>
     public AttachJob(string jobName)
-      : base("AGTAttachJob", jobName)
+      : base(Name, jobName)
     {
     }
   }

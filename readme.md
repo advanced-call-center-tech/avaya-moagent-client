@@ -8,9 +8,10 @@ This project was created as a replacement for the somewhat buggy Avaya provided 
 
 ### What's Included?
 
-* AvayaMoagentClient - This is the client itself.
+* AvayaMoagentClient - This is the client itself (the MoagentClient class).
 * AvayaPDSEmulator - A highly compatible simulator for for the Avaya dialer, allows for off-line testing and development.
-* AvayaTestClient - A GUI test application for testing the client.
+* MoagentTestClient - A Windows Forms application for testing the Moagent client.
+* AvayaDialerTestClient - A Windows Forms application for testing the AvayaDialer class, which utilizes MoagentClient and contains logic for interacting with Avaya PDS.
 
 ### Compatibility
 

@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class DetachJob : Command
   {
+    public const string Name = "AGTDetachJob";
+
     static DetachJob()
     {
       Default = new DetachJob();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public DetachJob()
-      : base("AGTDetachJob")
+      : base(Name)
     {
     }
 

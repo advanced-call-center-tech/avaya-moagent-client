@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AvayaMoagentClient</RootNamespace>
     <AssemblyName>AvayaMoagentClient</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -31,6 +31,8 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>
@@ -48,6 +50,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AvayaDialer.Data.cs" />
+    <Compile Include="AvayaDialer.Error.cs" />
+    <Compile Include="AvayaDialer.Notification.cs" />
+    <Compile Include="AvayaDialer.Response.cs" />
+    <Compile Include="CallData.cs" />
     <Compile Include="Commands\AvailableWork.cs" />
     <Compile Include="Commands\AttachJob.cs" />
     <Compile Include="AvayaDialer.cs" />
@@ -67,8 +74,20 @@
     <Compile Include="Commands\DetachJob.cs" />
     <Compile Include="Commands\FinishedItem.cs" />
     <Compile Include="Commands\FreeHeadset.cs" />
+    <Compile Include="DialerErrorReceivedEventArgs.cs" />
+    <Compile Include="Enumerations\AgentState.cs" />
+    <Compile Include="Enumerations\BlendMode.cs" />
+    <Compile Include="Enumerations\DialerMode.cs" />
+    <Compile Include="Enumerations\DialResult.cs" />
+    <Compile Include="Enumerations\ErrorCode.cs" />
     <Compile Include="Enumerations\JobListingType.cs" />
+    <Compile Include="Enumerations\JobStage.cs" />
     <Compile Include="Enumerations\JobStatus.cs" />
+    <Compile Include="Enumerations\Notification.cs" />
+    <Compile Include="Enumerations\RequestError.cs" />
+    <Compile Include="Enumerations\TransferStatus.cs" />
+    <Compile Include="FileLogger.cs" />
+    <Compile Include="Job.cs" />
     <Compile Include="Messages\MessageSentEventArgs.cs" />
     <Compile Include="Enumerations\FieldListType.cs" />
     <Compile Include="Enumerations\WorkClass.cs" />
@@ -82,7 +101,22 @@
     <Compile Include="Commands\ReleaseLine.cs" />
     <Compile Include="Commands\SetWorkClass.cs" />
     <Compile Include="Commands\SetNotifyKeyField.cs" />
+    <Compile Include="RequestManager.cs" />
+    <Compile Include="Requests\ConnectHeadsetRequest.cs" />
+    <Compile Include="Requests\GetJobsRequest.cs" />
+    <Compile Include="Requests\GetNextCallRequest.cs" />
+    <Compile Include="Requests\JoinJobRequest.cs" />
+    <Compile Include="Requests\LogoffRequest.cs" />
+    <Compile Include="Requests\LogonRequest.cs" />
+    <Compile Include="Requests\ManagedDialRequest.cs" />
+    <Compile Include="Requests\ReleaseLineRequest.cs" />
+    <Compile Include="Requests\Request.cs" />
+    <Compile Include="Requests\TerminateCallRequest.cs" />
+    <Compile Include="Requests\TransferCallRequest.cs" />
+    <Compile Include="RingbackNotAnsweredEventArgs.cs" />
     <Compile Include="StateObject.cs" />
+    <Compile Include="TransferNumber.cs" />
+    <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

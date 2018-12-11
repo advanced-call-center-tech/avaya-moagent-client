@@ -29,13 +29,15 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class Logon : Command
   {
+    public const string Name = "AGTLogon";
+
     /// <summary>
     /// Creates a Logon command with the specified username and password.
     /// </summary>
     /// <param name="userName"></param>
     /// <param name="password"></param>
     public Logon(string userName, string password)
-      : base("AGTLogon", userName, password)
+      : base(Name, userName, password)
     {
     }
   }

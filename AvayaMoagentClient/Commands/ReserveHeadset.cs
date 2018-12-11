@@ -29,12 +29,14 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class ReserveHeadset : Command
   {
+    public const string Name = "AGTReserveHeadset";
+
     /// <summary>
     /// Creates a ReserveHeadset command with the specified extension.
     /// </summary>
     /// <param name="extension"></param>
     public ReserveHeadset(string extension)
-      : base("AGTReserveHeadset", extension)
+      : base(Name, extension)
     {
     }
   }

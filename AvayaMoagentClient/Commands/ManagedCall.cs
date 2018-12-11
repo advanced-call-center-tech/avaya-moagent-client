@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class ManagedCall : Command
   {
+    public const string Name = "AGTManagedCall";
+
     static ManagedCall()
     {
       Default = new ManagedCall();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public ManagedCall()
-      : base("AGTManagedCall")
+      : base(Name)
     {
     }
 

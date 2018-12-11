@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class AvailableWork : Command
   {
+    public const string Name = "AGTAvailWork";
+
     static AvailableWork()
     {
       Default = new AvailableWork();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public AvailableWork()
-      : base("AGTAvailWork")
+      : base(Name)
     {
     }
 

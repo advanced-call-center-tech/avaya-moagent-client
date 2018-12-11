@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class ReleaseLine : Command
   {
+    public const string Name = "AGTReleaseLine";
+
     static ReleaseLine()
     {
       Default = new ReleaseLine();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public ReleaseLine()
-      : base("AGTReleaseLine")
+      : base(Name)
     {
     }
 

@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class NoFurtherWork : Command
   {
+    public const string Name = "AGTNoFurtherWork";
+
     static NoFurtherWork()
     {
       Default = new NoFurtherWork();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public NoFurtherWork()
-      : base("AGTNoFurtherWork")
+      : base(Name)
     {
     }
 

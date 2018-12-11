@@ -285,7 +285,7 @@ namespace AvayaMoagentClient
       {
         _Receive(client);
       }
-
+      
       if (Connected != null)
       {
         Connected(this, EventArgs.Empty);

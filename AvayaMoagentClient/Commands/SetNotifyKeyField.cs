@@ -30,13 +30,15 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class SetNotifyKeyField : Command
   {
+    public const string Name = "AGTSetNotifyKeyField";
+
     /// <summary>
     /// Creates a SetNotifyKeyField command with the specified type and name.
     /// </summary>
     /// <param name="type"></param>
     /// <param name="fieldName"></param>
     public SetNotifyKeyField(FieldListType type, string fieldName)
-      : base("AGTSetNotifyKeyField", ((char)type).ToString(), fieldName)
+      : base(Name, ((char)type).ToString(), fieldName)
     {
     }
   }

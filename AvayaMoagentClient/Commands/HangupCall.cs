@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class HangUpCall : Command
   {
+    public const string Name = "AGTHangupCall";
+
     static HangUpCall()
     {
       Default = new HangUpCall();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public HangUpCall()
-      : base("AGTHangupCall")
+      : base(Name)
     {
     }
 

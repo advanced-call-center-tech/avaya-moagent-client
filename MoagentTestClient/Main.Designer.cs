@@ -84,6 +84,7 @@
       this.clmDirection = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
       this.clmType = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
       this.clmMessage = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+      ((System.ComponentModel.ISupportInitialize)(this.splMain)).BeginInit();
       this.splMain.Panel1.SuspendLayout();
       this.splMain.Panel2.SuspendLayout();
       this.splMain.SuspendLayout();
@@ -159,7 +160,7 @@
       this.btnFreeHeadset.TabIndex = 17;
       this.btnFreeHeadset.Text = "Free Headset";
       this.btnFreeHeadset.UseVisualStyleBackColor = true;
-      this.btnFreeHeadset.Click += new System.EventHandler(this.btnFreeHeadset_Click);
+      this.btnFreeHeadset.Click += new System.EventHandler(this.FreeHeadset_Click);
       // 
       // btnDisconnectHeadset
       // 
@@ -169,7 +170,7 @@
       this.btnDisconnectHeadset.TabIndex = 16;
       this.btnDisconnectHeadset.Text = "Disconnect Headset";
       this.btnDisconnectHeadset.UseVisualStyleBackColor = true;
-      this.btnDisconnectHeadset.Click += new System.EventHandler(this.btnDisconnectHeadset_Click);
+      this.btnDisconnectHeadset.Click += new System.EventHandler(this.DisconnectHeadset_Click);
       // 
       // btnReserveHeadset
       // 
@@ -179,7 +180,7 @@
       this.btnReserveHeadset.TabIndex = 15;
       this.btnReserveHeadset.Text = "Reserve Headset";
       this.btnReserveHeadset.UseVisualStyleBackColor = true;
-      this.btnReserveHeadset.Click += new System.EventHandler(this.btnReserveHeadset_Click);
+      this.btnReserveHeadset.Click += new System.EventHandler(this.ReserveHeadset_Click);
       // 
       // txtExtension
       // 
@@ -205,7 +206,7 @@
       this.btnLogoff.TabIndex = 12;
       this.btnLogoff.Text = "Logoff";
       this.btnLogoff.UseVisualStyleBackColor = true;
-      this.btnLogoff.Click += new System.EventHandler(this.btnLogoff_Click);
+      this.btnLogoff.Click += new System.EventHandler(this.Logoff_Click);
       // 
       // btnLogon
       // 
@@ -215,7 +216,7 @@
       this.btnLogon.TabIndex = 11;
       this.btnLogon.Text = "Logon";
       this.btnLogon.UseVisualStyleBackColor = true;
-      this.btnLogon.Click += new System.EventHandler(this.btnLogon_Click);
+      this.btnLogon.Click += new System.EventHandler(this.Logon_Click);
       // 
       // btnDisconnect
       // 
@@ -225,7 +226,7 @@
       this.btnDisconnect.TabIndex = 10;
       this.btnDisconnect.Text = "Disconnect";
       this.btnDisconnect.UseVisualStyleBackColor = true;
-      this.btnDisconnect.Click += new System.EventHandler(this.btnDisconnect_Click);
+      this.btnDisconnect.Click += new System.EventHandler(this.Disconnect_Click);
       // 
       // btnConnect
       // 
@@ -235,7 +236,7 @@
       this.btnConnect.TabIndex = 9;
       this.btnConnect.Text = "Connect";
       this.btnConnect.UseVisualStyleBackColor = true;
-      this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
+      this.btnConnect.Click += new System.EventHandler(this.Connect_Click);
       // 
       // chkUseSSL
       // 
@@ -339,7 +340,7 @@
       this.btnDetachJob.TabIndex = 19;
       this.btnDetachJob.Text = "Detach Job";
       this.btnDetachJob.UseVisualStyleBackColor = true;
-      this.btnDetachJob.Click += new System.EventHandler(this.btnDetachJob_Click);
+      this.btnDetachJob.Click += new System.EventHandler(this.DetachJob_Click);
       // 
       // btnNoFurtherWork
       // 
@@ -349,7 +350,7 @@
       this.btnNoFurtherWork.TabIndex = 18;
       this.btnNoFurtherWork.Text = "No Further Work";
       this.btnNoFurtherWork.UseVisualStyleBackColor = true;
-      this.btnNoFurtherWork.Click += new System.EventHandler(this.btnNoFurtherWork_Click);
+      this.btnNoFurtherWork.Click += new System.EventHandler(this.NoFurtherWork_Click);
       // 
       // btnRelease
       // 
@@ -359,7 +360,7 @@
       this.btnRelease.TabIndex = 17;
       this.btnRelease.Text = "Release";
       this.btnRelease.UseVisualStyleBackColor = true;
-      this.btnRelease.Click += new System.EventHandler(this.btnRelease_Click);
+      this.btnRelease.Click += new System.EventHandler(this.Release_Click);
       // 
       // btnReadyNextItem
       // 
@@ -369,7 +370,7 @@
       this.btnReadyNextItem.TabIndex = 16;
       this.btnReadyNextItem.Text = "Ready Next Item";
       this.btnReadyNextItem.UseVisualStyleBackColor = true;
-      this.btnReadyNextItem.Click += new System.EventHandler(this.btnReadyNextItem_Click);
+      this.btnReadyNextItem.Click += new System.EventHandler(this.ReadyNextItem_Click);
       // 
       // btnGoAvailable
       // 
@@ -379,7 +380,7 @@
       this.btnGoAvailable.TabIndex = 15;
       this.btnGoAvailable.Text = "Go Available";
       this.btnGoAvailable.UseVisualStyleBackColor = true;
-      this.btnGoAvailable.Click += new System.EventHandler(this.btnGoAvailable_Click);
+      this.btnGoAvailable.Click += new System.EventHandler(this.GoAvailable_Click);
       // 
       // btnListJobs
       // 
@@ -389,7 +390,7 @@
       this.btnListJobs.TabIndex = 13;
       this.btnListJobs.Text = "List Jobs";
       this.btnListJobs.UseVisualStyleBackColor = true;
-      this.btnListJobs.Click += new System.EventHandler(this.btnListJobs_Click);
+      this.btnListJobs.Click += new System.EventHandler(this.ListJobs_Click);
       // 
       // btnListState
       // 
@@ -399,7 +400,7 @@
       this.btnListState.TabIndex = 12;
       this.btnListState.Text = "List State";
       this.btnListState.UseVisualStyleBackColor = true;
-      this.btnListState.Click += new System.EventHandler(this.btnListState_Click);
+      this.btnListState.Click += new System.EventHandler(this.ListState_Click);
       // 
       // tbpParameterized
       // 
@@ -455,7 +456,7 @@
       this.btnSetPassword.TabIndex = 34;
       this.btnSetPassword.Text = "Set Password";
       this.btnSetPassword.UseVisualStyleBackColor = true;
-      this.btnSetPassword.Click += new System.EventHandler(this.btnSetPassword_Click);
+      this.btnSetPassword.Click += new System.EventHandler(this.SetPassword_Click);
       // 
       // txtOldPass
       // 
@@ -497,7 +498,7 @@
       this.btnSetWorkClass.TabIndex = 29;
       this.btnSetWorkClass.Text = "Set Work Class";
       this.btnSetWorkClass.UseVisualStyleBackColor = true;
-      this.btnSetWorkClass.Click += new System.EventHandler(this.btnSetWorkClass_Click);
+      this.btnSetWorkClass.Click += new System.EventHandler(this.SetWorkClass_Click);
       // 
       // cboWorkClass
       // 
@@ -532,7 +533,7 @@
       this.btnFinishItem.TabIndex = 26;
       this.btnFinishItem.Text = "Finish Item";
       this.btnFinishItem.UseVisualStyleBackColor = true;
-      this.btnFinishItem.Click += new System.EventHandler(this.btnFinishItem_Click);
+      this.btnFinishItem.Click += new System.EventHandler(this.FinishItem_Click);
       // 
       // txtCompletionCode
       // 
@@ -571,7 +572,7 @@
       this.btnSetNotifyKeyField.TabIndex = 22;
       this.btnSetNotifyKeyField.Text = "Set Notify Key Field";
       this.btnSetNotifyKeyField.UseVisualStyleBackColor = true;
-      this.btnSetNotifyKeyField.Click += new System.EventHandler(this.btnSetNotifyKeyField_Click);
+      this.btnSetNotifyKeyField.Click += new System.EventHandler(this.SetNotifyKeyField_Click);
       // 
       // btnSetDataField
       // 
@@ -581,7 +582,7 @@
       this.btnSetDataField.TabIndex = 21;
       this.btnSetDataField.Text = "Set Data Field";
       this.btnSetDataField.UseVisualStyleBackColor = true;
-      this.btnSetDataField.Click += new System.EventHandler(this.btnSetDataField_Click);
+      this.btnSetDataField.Click += new System.EventHandler(this.SetDataField_Click);
       // 
       // txtFieldName
       // 
@@ -608,7 +609,7 @@
       this.btnAttachJob.TabIndex = 18;
       this.btnAttachJob.Text = "Attach Job";
       this.btnAttachJob.UseVisualStyleBackColor = true;
-      this.btnAttachJob.Click += new System.EventHandler(this.btnAttachJob_Click);
+      this.btnAttachJob.Click += new System.EventHandler(this.AttachJob_Click);
       // 
       // txtJobName
       // 
@@ -667,9 +668,10 @@
       this.MinimumSize = new System.Drawing.Size(626, 408);
       this.Name = "Main";
       this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-      this.Text = "Avaya Test Client";
+      this.Text = "Moagent Test Client";
       this.splMain.Panel1.ResumeLayout(false);
       this.splMain.Panel2.ResumeLayout(false);
+      ((System.ComponentModel.ISupportInitialize)(this.splMain)).EndInit();
       this.splMain.ResumeLayout(false);
       this.tabControl1.ResumeLayout(false);
       this.tbpSetup.ResumeLayout(false);

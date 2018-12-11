@@ -21,49 +21,116 @@
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using AvayaMoagentClient;
 using AvayaMoagentClient.Commands;
 using AvayaMoagentClient.Enumerations;
 using AvayaMoagentClient.Messages;
+using AvayaMoagentClient.Requests;
 
 namespace AvayaMoagentClient
 {
   /// <summary>
   /// AvayaDialer
   /// </summary>
-  public class AvayaDialer
+  public partial class AvayaDialer
   {
+    private const string _CODE_COMPLETE = "M00000";
+    private const string _CODE_ADDITIONAL_DATA = "M00001";
+    private const string _STATUS_ON_JOB_ON_CALL = "S70000";
+    private const string _STATUS_ON_JOB_READY = "S70001";
+    private const string _STATUS_ON_JOB_IDLE_NOT_READY = "S70002";
+    private const string _STATUS_ON_JOB_UNAVAILABLE = "S70003";
+    private const string _STATUS_NOT_ON_JOB = "S70004";
+    private const string _FIELD_CURPHONE = "CURPHONE";
+    private const string _FIELD_DEFAULT_PHONE = "PHONE1";
+
+    private FileLogger _logger;
     private MoagentClient _client;
-    private string _host;
-    private int _port;
-    private bool _useSsl;
+    private string _extension;
+    private string _userName;
+    private SecureString _password;
+    private RequestManager _requestManager = new RequestManager();
+    private JobStage _jobStage = JobStage.Undefined;
+    private AgentState _agentState = AgentState.LoggedOff;
+    private string _nextJobName;
+    private bool _jobEnded;
+    private bool _headsetConnectionBroken;
 
     /// <summary>
-    /// Creates an AvayaDialer object with the specified criteria.
+    /// Default constructor
     /// </summary>
-    /// <param name="host"></param>
-    /// <param name="port"></param>
-    /// <param name="useSsl"></param>
-    public AvayaDialer(string host, int port, bool useSsl)
+    public AvayaDialer()
     {
-      _host = host;
-      _port = port;
-      _useSsl = useSsl;
-    }
+      CallFields = new List<string>();
 
-    /// <summary>
-    /// MessageSent
-    /// </summary>
-    public event MoagentClient.MessageSentHandler MessageSent;
+      AgentState = Enumerations.AgentState.LoggedOff;
+    }
 
     /// <summary>
     /// MessageReceived
     /// </summary>
-    public event MoagentClient.MessageReceivedHandler MessageReceived;
+    public event EventHandler<AvayaMoagentClient.Messages.MessageReceivedEventArgs> MessageReceived;
 
     /// <summary>
-    /// Disconnected
+    /// MessageSent
     /// </summary>
-    public event MoagentClient.DisconnectedHandler Disconnected;
+    public event EventHandler<AvayaMoagentClient.Messages.MessageSentEventArgs> MessageSent;
+
+    /// <summary>
+    /// AgentLoggedIn
+    /// </summary>
+    public event EventHandler<EventArgs> AgentLoggedIn;
+
+    /// <summary>
+    /// AgentLoggedOut
+    /// </summary>
+    public event EventHandler<EventArgs> AgentLoggedOut;
+
+    /// <summary>
+    /// CallConnected
+    /// </summary>
+    public event EventHandler<EventArgs> CallConnected;
+
+    /// <summary>
+    /// JobStageChanged
+    /// </summary>
+    public event EventHandler<EventArgs> JobStageChanged;
+
+    /// <summary>
+    /// AgentStateChanged
+    /// </summary>
+    public event EventHandler<EventArgs> AgentStateChanged;
+
+    /// <summary>
+    /// Ring back not answered
+    /// </summary>
+    public event EventHandler<EventArgs> RingbackNotAnswered;
+
+    /// <summary>
+    /// DialerErrorReceived
+    /// </summary>
+    public event EventHandler<DialerErrorReceivedEventArgs> DialerErrorReceived;
+
+    /// <summary>
+    /// Host
+    /// </summary>
+    public string Host { get; set; }
+
+    /// <summary>
+    /// Port
+    /// </summary>
+    public int Port { get; set; }
+
+    /// <summary>
+    /// Indicates whether to use SSL.
+    /// </summary>
+    public bool UseSsl { get; set; }
 
     /// <summary>
     /// IsConnected
@@ -72,185 +139,158 @@ namespace AvayaMoagentClient
     {
       get
       {
-        return _client.IsConnected;
+        return _client != null && _client.IsConnected;
       }
     }
 
     /// <summary>
-    /// Connect
+    /// CurrentCallData
     /// </summary>
-    public void Connect()
+    public CallData CurrentCallData { get; private set; }
+
+    /// <summary>
+    /// IsHeadsetConnected
+    /// </summary>
+    public bool IsHeadsetConnected { get; private set; }
+
+    /// <summary>
+    /// AllowMultiplePhoneNumbers
+    /// </summary>
+    public bool AllowMultiplePhoneNumbers { get; set; }
+
+    /// <summary>
+    /// UseCallFieldsForInbound
+    /// </summary>
+    public bool UseCallFieldsForInbound { get; set; }
+
+    /// <summary>
+    /// CallFields
+    /// </summary>
+    public List<string> CallFields { get; private set; }
+
+    /// <summary>
+    /// JobName
+    /// </summary>
+    public string JobName { get; private set; }
+
+    /// <summary>
+    /// IsJoinJobRequestPending
+    /// </summary>
+    public bool IsJoinJobRequestPending
     {
-      _client = new MoagentClient(_host, _port, _useSsl);
-      _client.MessageSent += _client_MessageSent;
-      _client.MessageReceived += _client_MessageReceived;
-      _client.Disconnected += _client_Disconnected;
-      _client.StartConnect();
+      get
+      {
+        return (_requestManager.GetFirst<JoinJobRequest>() != null);
+      }
     }
 
     /// <summary>
-    /// Login
+    /// JobStage
     /// </summary>
-    /// <param name="userName"></param>
-    /// <param name="password"></param>
-    public void Login(string userName, string password)
+    public JobStage JobStage
     {
-     _client.Send(new Logon(userName, password)); 
+      get
+      {
+        return _jobStage;
+      }
+
+      set
+      {
+        var old = _jobStage;
+
+        _jobStage = value;
+
+        if (old != value)
+        {
+          if (JobStageChanged != null)
+          {
+            JobStageChanged(this, EventArgs.Empty);
+          }
+        }
+      }
     }
 
     /// <summary>
-    /// ReserveHeadset
+    /// AgentState
+    /// </summary>
+    public AgentState AgentState
+    {
+      get
+      {
+        return _agentState;
+      }
+
+      set
+      {
+        var old = _agentState;
+
+        _agentState = value;
+        if (_agentState == Enumerations.AgentState.OnCall)
+        {
+          switch (JobStage)
+          {
+            case Enumerations.JobStage.PreviewingRecord:
+              {
+                _agentState = Enumerations.AgentState.Preview;
+                break;
+              }
+
+            case Enumerations.JobStage.Dialing:
+              {
+                _agentState = Enumerations.AgentState.Dial;
+                break;
+              }
+
+            case Enumerations.JobStage.Wrap:
+              {
+                _agentState = Enumerations.AgentState.Update;
+                break;
+              }
+
+            default:
+              {
+                //Do nothing
+                break;
+              }
+          }
+        }
+
+        if (old != _agentState)
+        {
+          if (AgentStateChanged != null)
+          {
+            AgentStateChanged(this, EventArgs.Empty);
+          }
+        }
+      }
+    }
+
+    /// <summary>
+    /// Logon
     /// </summary>
     /// <param name="extension"></param>
-    public void ReserveHeadset(string extension)
+    /// <param name="userName"></param>
+    /// <param name="password"></param>
+    public void Logon(string extension, string userName, string password)
     {
-      _client.Send(new ReserveHeadset(extension));
-    }
+      if (!IsConnected)
+      {
+        _extension = extension;
+        _userName = userName;
+        _password = Utilities.ToSecureString(password);
 
-    /// <summary>
-    /// ConnectHeadset
-    /// </summary>
-    public void ConnectHeadset()
-    {
-      _client.Send(Commands.ConnectHeadset.Default);
-    }
+        IsHeadsetConnected = false;
+        AgentState = Enumerations.AgentState.LoggingOn;
+        var request = _requestManager.Create(new LogonRequest());
+        _Connect();
 
-    /// <summary>
-    /// ListState
-    /// </summary>
-    public void ListState()
-    {
-      _client.Send(Commands.ListState.Default);
-    }
-
-    /// <summary>
-    /// ListJobs
-    /// </summary>
-    public void ListJobs()
-    {
-      _client.Send(Commands.ListJobs.All);
-    }
-
-    /// <summary>
-    /// AttachJob
-    /// </summary>
-    /// <param name="jobName"></param>
-    public void AttachJob(string jobName)
-    {
-      _client.Send(new AttachJob(jobName));
-    }
-
-    /// <summary>
-    /// SetWorkClass
-    /// </summary>
-    /// <param name="workClass"></param>
-    public void SetWorkClass(WorkClass workClass)
-    {
-      _client.Send(new SetWorkClass(workClass));
-    }
-
-    /// <summary>
-    /// SetNotifyKeyField
-    /// </summary>
-    /// <param name="type"></param>
-    /// <param name="fieldName"></param>
-    public void SetNotifyKeyField(FieldListType type, string fieldName)
-    {
-      _client.Send(new SetNotifyKeyField(type, fieldName)); 
-    }
-
-    /// <summary>
-    /// SetDataField
-    /// </summary>
-    /// <param name="type"></param>
-    /// <param name="fieldName"></param>
-    public void SetDataField(FieldListType type, string fieldName)
-    {
-      _client.Send(new SetDataField(type, fieldName));
-    }
-
-    /// <summary>
-    /// SetPassword
-    /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="presentPassword"></param>
-    /// <param name="newPassword"></param>
-    public void SetPassword(string userId, string presentPassword, string newPassword)
-    {
-      _client.Send(new SetPassword(userId, presentPassword, newPassword));
-    }
-
-    /// <summary>
-    /// AvailableWork
-    /// </summary>
-    public void AvailableWork()
-    {
-      _client.Send(Commands.AvailableWork.Default);
-    }
-
-    /// <summary>
-    /// ReadyNextItem
-    /// </summary>
-    public void ReadyNextItem()
-    {
-      _client.Send(Commands.ReadyNextItem.Default);
-    }
-
-    /// <summary>
-    /// FinishItem
-    /// </summary>
-    /// <param name="completionCode"></param>
-    public void FinishItem(string completionCode)
-    {
-      _client.Send(new FinishedItem(completionCode));
-    }
-
-    /// <summary>
-    /// HangUpCall
-    /// </summary>
-    public void HangUpCall()
-    {
-      _client.Send(Commands.HangUpCall.Default);
-    }
-
-    /// <summary>
-    /// ReleaseLine
-    /// </summary>
-    public void ReleaseLine()
-    {
-      _client.Send(Commands.ReleaseLine.Default);
-    }
-
-    /// <summary>
-    /// NoFurtherWork
-    /// </summary>
-    public void NoFurtherWork()
-    {
-      _client.Send(Commands.NoFurtherWork.Default);
-    }
-
-    /// <summary>
-    /// DetachJob
-    /// </summary>
-    public void DetachJob()
-    {
-      _client.Send(Commands.DetachJob.Default);
-    }
-    
-    /// <summary>
-    /// ListActiveJobs
-    /// </summary>
-    public void ListActiveJobs()
-    {
-      _client.Send(new ListJobs(JobListingType.All, JobStatus.Active));
-    }
-
-    /// <summary>
-    /// DisconnectHeadset
-    /// </summary>
-    public void DisconnectHeadset()
-    {
-      _client.Send(Commands.DisconnectHeadset.Default);
+        _requestManager.WaitForCompletion(request);
+        if (request.IsError)
+        {
+          AgentState = Enumerations.AgentState.LoggedOff;
+          throw new Exception(string.Format("Logon request failed ({0})", request.ErrorCode));
+        }
+      }
     }
 
     /// <summary>
@@ -258,124 +298,407 @@ namespace AvayaMoagentClient
     /// </summary>
     public void Logoff()
     {
-      _client.Send(Commands.Logoff.Default);
+      if (IsConnected)
+      {
+        var request = _requestManager.Create(new LogoffRequest());
+        AgentState = Enumerations.AgentState.LoggingOff;
+
+        if (!string.IsNullOrEmpty(_extension))
+        {
+          //Start the logoff process by attempting to disconnect the headset
+          _client.Send(Commands.DisconnectHeadset.Default);
+        }
+        else
+        {
+          _client.Send(Commands.Logoff.Default);
+        }
+
+        _requestManager.WaitForCompletion(request);
+        IsHeadsetConnected = false;
+      }
     }
 
     /// <summary>
-    /// Disconnect
+    /// GoAvailable
     /// </summary>
-    public void Disconnect()
+    /// <param name="job"></param>
+    /// <param name="blendMode"></param>
+    public void GoAvailable(Job job, BlendMode blendMode)
     {
-      _client.Disconnect();
-      _client.MessageSent -= _client_MessageSent;
-      _client.MessageReceived -= _client_MessageReceived;
-      _client.Disconnected -= _client_Disconnected;
-      _client = null;
+      if (!IsHeadsetConnected)
+      {
+        _ConnectHeadset();
+      }
+
+      if (_jobEnded)
+      {
+        _jobEnded = false;
+        AgentState = Enumerations.AgentState.Idle;
+      }
+
+      JoinJob(job, blendMode, true);
     }
 
     /// <summary>
-    /// FreeHeadset
+    /// GoUnavailable
     /// </summary>
-    public void FreeHeadset()
+    public void GoUnavailable()
     {
-      _client.Send(Commands.FreeHeadset.Default);
+      if (_jobEnded)
+      {
+        AgentState = Enumerations.AgentState.GoUnavailable;
+
+        _client.Send(AvayaMoagentClient.Commands.DetachJob.Default);
+      }
+      else
+      {
+        if (IsHeadsetConnected)
+        {
+          if (AgentState == Enumerations.AgentState.Attached)
+          {
+            _client.Send(AvayaMoagentClient.Commands.DetachJob.Default);
+          }
+          else
+          {
+            _client.Send(AvayaMoagentClient.Commands.NoFurtherWork.Default);
+          }
+        }
+        else
+        {
+          _client.Send(AvayaMoagentClient.Commands.NoFurtherWork.Default);
+        }
+      }
     }
 
     /// <summary>
-    /// TransferCall
+    /// GetAllJobs
     /// </summary>
-    public void TransferCall()
+    /// <returns></returns>
+    public List<Job> GetAllJobs()
     {
-      _client.Send(Commands.TransferCall.Default);
+      return GetJobs(JobListingType.All);
     }
 
     /// <summary>
-    /// TransferCall
+    /// GetJobs
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public List<Job> GetJobs(JobListingType type)
+    {
+      List<Job> ret = null;
+
+      if (IsConnected)
+      {
+        var request = (GetJobsRequest)_requestManager.Create(new GetJobsRequest());
+        _client.Send(new Commands.ListJobs(type));
+
+        _requestManager.WaitForCompletion(request);
+
+        ret = request.Jobs;
+      }
+
+      return ret;
+    }
+
+    /// <summary>
+    /// JoinJob
+    /// </summary>
+    /// <param name="job"></param>
+    /// <param name="blendMode"></param>
+    /// <param name="goReady"></param>
+    public void JoinJob(Job job, BlendMode blendMode, bool goReady)
+    {
+      if (IsConnected)
+      {
+        var request = _requestManager.Create(new JoinJobRequest(job, blendMode, CallFields, goReady));
+        _client.Send(AvayaMoagentClient.Commands.ListState.Default);
+
+        _requestManager.WaitForCompletion(request);
+      }
+    }
+
+    /// <summary>
+    /// TerminateCall
+    /// </summary>
+    /// <param name="status"></param>
+    public void TerminateCall(string status)
+    {
+      if (IsConnected)
+      {
+        var request = _requestManager.Create(new TerminateCallRequest(status));
+
+        _client.Send(new AvayaMoagentClient.Commands.FinishedItem(status));
+
+        _requestManager.WaitForCompletion(request);
+      }
+    }
+
+    /// <summary>
+    /// ReadyNextItem
+    /// </summary>
+    public void ReadyNextItem()
+    {
+      if (IsConnected)
+      {
+        var request = _requestManager.Create(new GetNextCallRequest());
+
+        _client.Send(AvayaMoagentClient.Commands.ReadyNextItem.Default);
+
+        _requestManager.WaitForCompletion(request);
+      }
+    }
+
+    /// <summary>
+    /// ReleaseLine
+    /// </summary>
+    public void ReleaseLine()
+    {
+      if (IsConnected)
+      {
+        var request = _requestManager.Create(new ReleaseLineRequest());
+
+        _client.Send(AvayaMoagentClient.Commands.ReleaseLine.Default);
+
+        _requestManager.WaitForCompletion(request);
+      }
+    }
+
+    /// <summary>
+    /// ManagedDial
+    /// </summary>
+    /// <param name="action"></param>
+    public void ManagedDial(Action<ManagedDialRequest> action)
+    {
+      var request = (ManagedDialRequest)_requestManager.Create(new ManagedDialRequest());
+
+      _client.Send(AvayaMoagentClient.Commands.ManagedCall.Default);
+
+      Task.Factory.StartNew(() =>
+        {
+          _requestManager.WaitForCompletion(request);
+
+          if (action != null)
+          {
+            action(request);
+          }
+        });
+    }
+
+    /// <summary>
+    /// StartTransfer
     /// </summary>
     /// <param name="transferNumber"></param>
-    public void TransferCall(string transferNumber)
+    /// <param name="action"></param>
+    /// <returns></returns>
+    public TransferCallRequest StartTransfer(TransferNumber transferNumber, Action<TransferCallRequest> action)
     {
-      _client.Send(new TransferCall(transferNumber));
+      var request = (TransferCallRequest)_requestManager.Create(new TransferCallRequest(transferNumber));
+
+      _client.Send(new AvayaMoagentClient.Commands.TransferCall(transferNumber.PhoneNumber));
+
+      Task.Factory.StartNew(() =>
+      {
+        _requestManager.WaitForCompletion(request, 60000 * 60);
+
+        if (action != null)
+        {
+          action(request);
+        }
+      });
+
+      return request;
     }
 
     /// <summary>
-    /// ManagedCall
+    /// Conference
     /// </summary>
-    public void ManagedCall()
+    public void Conference()
     {
-      _client.Send(Commands.ManagedCall.Default);
+      _client.Send(AvayaMoagentClient.Commands.TransferCall.Default);
     }
 
     /// <summary>
-    /// ManualCall
+    /// CancelTransfer
     /// </summary>
-    public void ManualCall()
+    public void CancelTransfer()
     {
-      throw new NotImplementedException();
+      _client.Send(AvayaMoagentClient.Commands.HangUpCall.Default);
     }
 
     /// <summary>
-    /// DialDigit
+    /// RefreshState
     /// </summary>
-    /// <param name="digit"></param>
-    public void DialDigit(string digit)
+    public void RefreshState()
     {
-      throw new NotImplementedException();
+      if (IsConnected)
+      {
+        _client.Send(AvayaMoagentClient.Commands.ListState.Default);
+      }
     }
 
-    /// <summary>
-    /// SetCallback
-    /// </summary>
-    /// <param name="callbackDate"></param>
-    /// <param name="callbackTime"></param>
-    /// <param name="phoneIndex"></param>
-    /// <param name="recallName"></param>
-    /// <param name="recallNumber"></param>
-    public void SetCallback(string callbackDate, string callbackTime, string phoneIndex, string recallName, 
-        string recallNumber)
+    private void _ConnectHeadset()
     {
-      throw new NotImplementedException();
+      var request = _requestManager.Create(new ConnectHeadsetRequest());
+
+      _StartConnectHeadset();
+
+      _requestManager.WaitForCompletion(request);
     }
 
-    /// <summary>
-    /// SendCommand
-    /// </summary>
-    /// <param name="command"></param>
-    public void SendCommand(Command command)
+    private void _StartConnectHeadset()
     {
-      _client.Send(command);
-    }
-
-    /// <summary>
-    /// SendMessage
-    /// </summary>
-    /// <param name="message"></param>
-    public void SendMessage(Message message)
-    {
-      _client.Send(message);
+      AgentState = Enumerations.AgentState.RingBack;
+      _client.Send(AvayaMoagentClient.Commands.ConnectHeadset.Default);
     }
 
     private void _client_MessageSent(object sender, MessageSentEventArgs e)
     {
+      if (_logger != null)
+      {
+        _logger.Write(string.Format("Client > {0:T} {1}", DateTime.Now, e.Message.RawMessage));
+      }
+
       if (MessageSent != null)
       {
-        MessageSent(this, e);
+        MessageSent(sender, e);
       }
     }
 
     private void _client_MessageReceived(object sender, MessageReceivedEventArgs e)
     {
+      if (_logger != null)
+      {
+        _logger.Write(string.Format("Client < {0:T} {1}", DateTime.Now, e.Message.RawMessage));
+      }
+
       if (MessageReceived != null)
       {
-        MessageReceived(this, e);
+        MessageReceived(sender, e);
+      }
+
+      try
+      {
+        if (e.Message.IsError)
+        {
+          _HandleErrorMessage(e.Message);
+        }
+        else
+        {
+          switch (e.Message.Type)
+          {
+            case MessageType.Pending:
+              {
+                _HandlePendingMessage(e.Message);
+                break;
+              }
+
+            case MessageType.Data:
+              {
+                _HandleDataMessage(e.Message);
+                break;
+              }
+
+            case MessageType.Response:
+              {
+                _HandleResponseMessage(e.Message);
+                break;
+              }
+
+            case MessageType.Notification:
+              {
+                _HandleNotificationMessage(e.Message);
+                break;
+              }
+
+            default:
+              {
+                //Uh...ignore it, I guess...
+                break;
+              }
+          }
+        }
+      }
+      catch
+      {
+        //Well...we tried...
       }
     }
 
-    private void _client_Disconnected(object sender, EventArgs e)
+    private void _SetupLogger()
     {
-      if (Disconnected != null)
+      _TeardownLogger();
+
+      _logger = new FileLogger();
+      _logger.Write(string.Format("<=========== Avaya PC Agent API log file for {0:F} ===========>", DateTime.Now));
+      _logger.Write(string.Empty);
+      _logger.Write("The 55 contiguous bytes starting with the A of AGT... form the Mosaix header.");
+      _logger.Write("The header is composed of these parts in the order given:");
+      _logger.Write("20 bytes - Mosaix command with prefix AGT (agent)");
+      _logger.Write(" 1 byte - Message type");
+      _logger.Write("20 bytes - Originator ID (reserved for future use)");
+      _logger.Write(" 6 bytes - Process ID (reserved for future use)");
+      _logger.Write(" 4 bytes - Invoke ID (reserved for future use)");
+      _logger.Write(" 4 bytes - Number of data segments appended to header");
+      _logger.Write(string.Empty);
+    }
+
+    private void _TeardownLogger()
+    {
+      if (_logger != null)
       {
-        Disconnected(this, e);
+        _logger.FlushBuffer();
+        _logger = null;
+      }
+    }
+
+    private void _Connect()
+    {
+      _SetupLogger();
+
+      _client = new MoagentClient(Host, Port, UseSsl);
+      _client.MessageSent += _client_MessageSent;
+      _client.MessageReceived += _client_MessageReceived;
+      _client.StartConnect();
+    }
+
+    private void _Disconnect()
+    {
+      _client.Disconnect();
+      _client.MessageSent -= _client_MessageSent;
+      _client.MessageReceived -= _client_MessageReceived;
+      _client = null;
+
+      _TeardownLogger();
+    }
+
+    private void _HandlePendingMessage(Message msg)
+    {
+      switch (msg.Command)
+      {
+        case AvayaMoagentClient.Commands.ManagedCall.Name:
+          {
+            AgentState = Enumerations.AgentState.Dial;
+            JobStage = Enumerations.JobStage.Dialing;
+
+            break;
+          }
+
+        case AvayaMoagentClient.Commands.NoFurtherWork.Name:
+          {
+            break;
+          }
+
+        case AvayaMoagentClient.Commands.TransferCall.Name:
+          {
+            break;
+          }
+
+        default:
+          {
+            //Uh...I don't know...
+            break;
+          }
       }
     }
   }

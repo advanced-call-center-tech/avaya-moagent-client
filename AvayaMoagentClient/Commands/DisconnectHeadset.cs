@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class DisconnectHeadset : Command
   {
+    public const string Name = "AGTDisconnHeadset";
+
     static DisconnectHeadset()
     {
       Default = new DisconnectHeadset();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public DisconnectHeadset()
-      : base("AGTDisconnHeadset")
+      : base(Name)
     {
     }
 

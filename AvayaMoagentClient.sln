@@ -1,11 +1,15 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvayaPDSEmulator", "AvayaPDSEmulator\AvayaPDSEmulator.csproj", "{3BB65348-8605-42BC-B4E0-A90A95B7D6F8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvayaMoagentClient", "AvayaMoagentClient\AvayaMoagentClient.csproj", "{DF260CC5-B94D-4D89-8430-C865E4AD47E9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvayaTestClient", "AvayaTestClient\AvayaTestClient.csproj", "{070FD496-E849-4556-BA39-8D7F300384C1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoagentTestClient", "MoagentTestClient\MoagentTestClient.csproj", "{070FD496-E849-4556-BA39-8D7F300384C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvayaDialerTestClient", "AvayaDialerTestClient\AvayaDialerTestClient.csproj", "{67D777BD-41C8-4A22-B3CA-218665F868B9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +51,16 @@ Global
 		{070FD496-E849-4556-BA39-8D7F300384C1}.Release|Mixed Platforms.Build.0 = Release|x86
 		{070FD496-E849-4556-BA39-8D7F300384C1}.Release|x86.ActiveCfg = Release|x86
 		{070FD496-E849-4556-BA39-8D7F300384C1}.Release|x86.Build.0 = Release|x86
+		{67D777BD-41C8-4A22-B3CA-218665F868B9}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{67D777BD-41C8-4A22-B3CA-218665F868B9}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{67D777BD-41C8-4A22-B3CA-218665F868B9}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{67D777BD-41C8-4A22-B3CA-218665F868B9}.Debug|x86.ActiveCfg = Debug|x86
+		{67D777BD-41C8-4A22-B3CA-218665F868B9}.Debug|x86.Build.0 = Debug|x86
+		{67D777BD-41C8-4A22-B3CA-218665F868B9}.Release|Any CPU.ActiveCfg = Release|x86
+		{67D777BD-41C8-4A22-B3CA-218665F868B9}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{67D777BD-41C8-4A22-B3CA-218665F868B9}.Release|Mixed Platforms.Build.0 = Release|x86
+		{67D777BD-41C8-4A22-B3CA-218665F868B9}.Release|x86.ActiveCfg = Release|x86
+		{67D777BD-41C8-4A22-B3CA-218665F868B9}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

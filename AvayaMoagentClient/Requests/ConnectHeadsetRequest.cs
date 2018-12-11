@@ -25,19 +25,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace AvayaTestClient
+namespace AvayaMoagentClient.Requests
 {
   /// <summary>
-  /// Startup
+  /// ConnectHeadsetRequest
   /// </summary>
-  public class Startup
+  public class ConnectHeadsetRequest : Request
   {
-    /// <summary>
-    /// Main
-    /// </summary>
-    public static void Main()
-    {
-      System.Windows.Forms.Application.Run(new Main());
-    }
   }
 }

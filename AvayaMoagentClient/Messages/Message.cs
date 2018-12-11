@@ -124,7 +124,7 @@ namespace AvayaMoagentClient.Messages
     }
 
     /// <summary>
-    /// Error code, if available.
+    /// Error code, if available. (Also not necessarily an error.)
     /// </summary>
     public string Code
     {

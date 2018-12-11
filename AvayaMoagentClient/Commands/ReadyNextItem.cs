@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class ReadyNextItem : Command
   {
+    public const string Name = "AGTReadyNextItem";
+
     static ReadyNextItem()
     {
       Default = new ReadyNextItem();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public ReadyNextItem()
-      : base("AGTReadyNextItem")
+      : base(Name)
     {
     }
 

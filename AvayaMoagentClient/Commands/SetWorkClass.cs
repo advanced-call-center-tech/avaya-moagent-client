@@ -30,12 +30,14 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class SetWorkClass : Command
   {
+    public const string Name = "AGTSetWorkClass";
+
     /// <summary>
     /// Creates a SetWorkClass command with the specified work class.
     /// </summary>
     /// <param name="workClass"></param>
     public SetWorkClass(WorkClass workClass)
-      : base("AGTSetWorkClass", ((char)workClass).ToString())
+      : base(Name, ((char)workClass).ToString())
     {
     }
   }

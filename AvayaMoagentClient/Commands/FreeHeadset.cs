@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class FreeHeadset : Command
   {
+    public const string Name = "AGTFreeHeadset";
+
     static FreeHeadset()
     {
       Default = new FreeHeadset();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public FreeHeadset()
-      : base("AGTFreeHeadset")
+      : base(Name)
     {
     }
 

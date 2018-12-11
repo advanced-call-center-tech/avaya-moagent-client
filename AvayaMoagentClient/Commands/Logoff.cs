@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class Logoff : Command
   {
+    public const string Name = "AGTLogoff";
+
     static Logoff()
     {
       Default = new Logoff();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public Logoff()
-      : base("AGTLogoff")
+      : base(Name)
     {
     }
 

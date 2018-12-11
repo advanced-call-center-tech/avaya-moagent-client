@@ -29,6 +29,8 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class ConnectHeadset : Command
   {
+    public const string Name = "AGTConnHeadset";
+
     static ConnectHeadset()
     {
       Default = new ConnectHeadset();
@@ -38,7 +40,7 @@ namespace AvayaMoagentClient.Commands
     /// Default constructor
     /// </summary>
     public ConnectHeadset()
-      : base("AGTConnHeadset")
+      : base(Name)
     {
     }
 

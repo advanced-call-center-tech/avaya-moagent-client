@@ -30,13 +30,15 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class SetDataField : Command
   {
+    public const string Name = "AGTSetDataField";
+
     /// <summary>
     /// Creates a SetDataField command with the specified type and name.
     /// </summary>
     /// <param name="type"></param>
     /// <param name="fieldName"></param>
     public SetDataField(FieldListType type, string fieldName)
-      : base("AGTSetDataField", ((char)type).ToString(), fieldName)
+      : base(Name, ((char)type).ToString(), fieldName)
     {
     }
   }

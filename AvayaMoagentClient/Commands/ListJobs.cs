@@ -30,7 +30,7 @@ namespace AvayaMoagentClient.Commands
   /// </summary>
   public class ListJobs : Command
   {
-    private const string _COMMAND = "AGTListJobs";
+    public const string Name = "AGTListJobs";
 
     static ListJobs()
     {
@@ -42,17 +42,7 @@ namespace AvayaMoagentClient.Commands
     /// </summary>
     /// <param name="type"></param>
     public ListJobs(JobListingType type)
-      : base(_COMMAND, ((char)type).ToString())
-    {
-    }
-
-    /// <summary>
-    /// Creates a ListJob command with the specified type and status.
-    /// </summary>
-    /// <param name="type"></param>
-    /// <param name="status"></param>
-    public ListJobs(JobListingType type, JobStatus status)
-      : base(_COMMAND, ((char)type).ToString(), ((char)status).ToString())
+      : base(Name, ((char)type).ToString())
     {
     }
 
