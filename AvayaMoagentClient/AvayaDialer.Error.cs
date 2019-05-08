@@ -48,25 +48,28 @@ namespace AvayaMoagentClient
             {
               case ErrorCode.RingbackTimeout:
                 {
-                  var e = new RingbackNotAnsweredEventArgs();
-                  if (RingbackNotAnswered != null)
+                  if (!IsHeadsetConnected)
                   {
-                    RingbackNotAnswered(this, e);
-                  }
-
-                  if (e.TryAgain)
-                  {
-                    _StartConnectHeadset();
-                  }
-                  else
-                  {
-                    if (_headsetConnectionBroken)
+                    var e = new RingbackNotAnsweredEventArgs();
+                    if (RingbackNotAnswered != null)
                     {
-                      GoUnavailable();
+                      RingbackNotAnswered(this, e);
+                    }
+
+                    if (e.TryAgain)
+                    {
+                      _StartConnectHeadset();
                     }
                     else
                     {
-                      _client.Send(AvayaMoagentClient.Commands.FreeHeadset.Default);
+                      if (_headsetConnectionBroken)
+                      {
+                        GoUnavailable();
+                      }
+                      else
+                      {
+                        _client.Send(AvayaMoagentClient.Commands.FreeHeadset.Default);
+                      }
                     }
                   }
 
