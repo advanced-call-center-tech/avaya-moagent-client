@@ -245,5 +245,10 @@ namespace AvayaTestClient
         _client.Send(new AvayaMoagentClient.Commands.SetPassword(txtSetPassUser.Text, txtOldPass.Text, txtNewPass.Text));
       }
     }
+
+    private void btnConnectHeadset_Click(object sender, EventArgs e)
+    {
+      _client.Send(AvayaMoagentClient.Commands.ConnectHeadset.Default);
+    }
   }
 }

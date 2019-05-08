@@ -51,6 +51,7 @@
       this.txtUserName = new System.Windows.Forms.TextBox();
       this.lblUserName = new System.Windows.Forms.Label();
       this.tbpBasic = new System.Windows.Forms.TabPage();
+      this.btnConnectHeadset = new System.Windows.Forms.Button();
       this.btnDetachJob = new System.Windows.Forms.Button();
       this.btnNoFurtherWork = new System.Windows.Forms.Button();
       this.btnRelease = new System.Windows.Forms.Button();
@@ -317,6 +318,7 @@
       // 
       // tbpBasic
       // 
+      this.tbpBasic.Controls.Add(this.btnConnectHeadset);
       this.tbpBasic.Controls.Add(this.btnDetachJob);
       this.tbpBasic.Controls.Add(this.btnNoFurtherWork);
       this.tbpBasic.Controls.Add(this.btnRelease);
@@ -331,6 +333,16 @@
       this.tbpBasic.TabIndex = 1;
       this.tbpBasic.Text = "Basic Commands";
       this.tbpBasic.UseVisualStyleBackColor = true;
+      // 
+      // btnConnectHeadset
+      // 
+      this.btnConnectHeadset.Location = new System.Drawing.Point(240, 59);
+      this.btnConnectHeadset.Name = "btnConnectHeadset";
+      this.btnConnectHeadset.Size = new System.Drawing.Size(109, 47);
+      this.btnConnectHeadset.TabIndex = 20;
+      this.btnConnectHeadset.Text = "Connect Headset";
+      this.btnConnectHeadset.UseVisualStyleBackColor = true;
+      this.btnConnectHeadset.Click += new System.EventHandler(this.btnConnectHeadset_Click);
       // 
       // btnDetachJob
       // 
@@ -740,5 +752,6 @@
     private System.Windows.Forms.TextBox txtSetPassUser;
     private System.Windows.Forms.Label lblSetPassUserName;
     private System.Windows.Forms.ColumnHeader clmType;
+    private System.Windows.Forms.Button btnConnectHeadset;
   }
 }
