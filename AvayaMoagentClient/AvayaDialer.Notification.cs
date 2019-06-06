@@ -51,7 +51,7 @@ namespace AvayaMoagentClient
           {
             switch (msg.Code)
             {
-              case _CODE_ADDITIONAL_DATA:
+              case AvayaDialer.CODE_ADDITIONAL_DATA:
                 {
                   if (CurrentCallData == null)
                   {
@@ -66,7 +66,7 @@ namespace AvayaMoagentClient
                   break;
                 }
 
-              case _CODE_COMPLETE:
+              case AvayaDialer.CODE_COMPLETE:
                 {
                   //Officially on the call now
                   JobStage = Enumerations.JobStage.OnCall;
@@ -92,7 +92,7 @@ namespace AvayaMoagentClient
 
             switch (msg.Code)
             {
-              case _CODE_ADDITIONAL_DATA:
+              case CODE_ADDITIONAL_DATA:
                 {
                   if (CurrentCallData == null)
                   {
@@ -107,7 +107,7 @@ namespace AvayaMoagentClient
                   break;
                 }
 
-              case _CODE_COMPLETE:
+              case CODE_COMPLETE:
                 {
                   //Nothing to do
                   break;
@@ -137,14 +137,14 @@ namespace AvayaMoagentClient
           {
             switch (msg.Code)
             {
-              case _CODE_ADDITIONAL_DATA:
+              case CODE_ADDITIONAL_DATA:
                 {
                   _nextJobName = msg.Contents[2];
 
                   break;
                 }
 
-              case _CODE_COMPLETE:
+              case CODE_COMPLETE:
                 {
                   AgentState = Enumerations.AgentState.JobTransfer;
                   _client.Send(AvayaMoagentClient.Commands.DetachJob.Default);

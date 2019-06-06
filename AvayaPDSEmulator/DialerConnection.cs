@@ -22,28 +22,32 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
+using AvayaMoagentClient;
+using AvayaMoagentClient.Messages;
 
 namespace AvayaPDSEmulator
 {
   /// <summary>
   /// StateObject
   /// </summary>
-  public class StateObject
+  public class DialerConnection
   {
     public const int ReadBufferSize = 1024;
 
     /// <summary>
     /// Default constructor
     /// </summary>
-    public StateObject()
+    public DialerConnection()
     {
       Id = Guid.NewGuid();
       Buffer = new byte[ReadBufferSize];
       Message = new StringBuilder();
-      CurrentState = "S70004"; //logged on, idle, not attached to job
+      CurrentState = AvayaDialer.STATUS_NOT_ON_JOB;
       CurrentJob = string.Empty;
     }
 
@@ -86,5 +90,16 @@ namespace AvayaPDSEmulator
     /// IsDisconnecting
     /// </summary>
     public bool IsDisconnecting { get; set; }
+
+    public void SendToClient(Message msg)
+    {
+      var writer = new StreamWriter(new NetworkStream(WorkSocket, true));
+      var raw = msg.RawMessage;
+
+      Logging.LogEvent(string.Format("Sending message ({0}): {1}", DateTime.Now, raw));
+      writer.Write(raw);
+      writer.Flush();
+      Thread.Sleep(50);
+    }
   }
 }

@@ -93,7 +93,7 @@ namespace AvayaPDSEmulator
 
     private void Connect_Click(object sender, EventArgs e)
     {
-      _client = new AvayaMoagentClient.MoagentClient(txtIP.Text, AvayaPdsServer.PortNumber);
+      _client = new AvayaMoagentClient.MoagentClient(txtIP.Text, AvayaPdsServer.DEFAULT_PORT_NUMBER);
       _client.MessageReceived += _client_MessageReceived;
       _client.Connected += _client_ConnectComplete;
       _client.StartConnect();
@@ -110,7 +110,7 @@ namespace AvayaPDSEmulator
 
     private void _client_MessageReceived(object sender, MessageReceivedEventArgs e)
     {
-      if (e.Message.Command == AvayaMoagentClient.Commands.ListJobs.All.Cmd && e.Message.Contents[1] == "M00001")
+      if (e.Message.Command == AvayaMoagentClient.Commands.ListJobs.All.Cmd && e.Message.Contents[1] == AvayaDialer.CODE_ADDITIONAL_DATA)
       {
         _SetJobs(e.Message.Contents);
       }
@@ -269,7 +269,7 @@ namespace AvayaPDSEmulator
         var data = new List<string>();
         var type = Convert.ToString(cboCallType.SelectedItem);
 
-        data.Add("M00001");
+        data.Add(AvayaDialer.CODE_ADDITIONAL_DATA);
         data.Add(txtMessage.Text);
         data.Add(type);
         data.AddRange(txtData.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries));

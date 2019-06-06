@@ -53,31 +53,31 @@ namespace AvayaMoagentClient
 
               switch (state)
               {
-                case _STATUS_ON_JOB_ON_CALL:
+                case STATUS_ON_JOB_ON_CALL:
                   {
                     AgentState = Enumerations.AgentState.OnCall;
                     break;
                   }
 
-                case _STATUS_ON_JOB_READY:
+                case STATUS_ON_JOB_READY:
                   {
                     AgentState = Enumerations.AgentState.Ready;
                     break;
                   }
 
-                case _STATUS_ON_JOB_IDLE_NOT_READY:
+                case STATUS_ON_JOB_IDLE_NOT_READY:
                   {
                     AgentState = Enumerations.AgentState.Available;
                     break;
                   }
 
-                case _STATUS_ON_JOB_UNAVAILABLE:
+                case STATUS_ON_JOB_UNAVAILABLE:
                   {
                     AgentState = Enumerations.AgentState.Attached;
                     break;
                   }
 
-                case _STATUS_NOT_ON_JOB:
+                case STATUS_NOT_ON_JOB:
                   {
                     AgentState = Enumerations.AgentState.Idle;
                     break;
@@ -96,8 +96,8 @@ namespace AvayaMoagentClient
             {
               switch (msg.Code)
               {
-                case _STATUS_ON_JOB_ON_CALL:
-                case _STATUS_ON_JOB_READY:
+                case STATUS_ON_JOB_ON_CALL:
+                case STATUS_ON_JOB_READY:
                   {
                     var request = _requestManager.GetFirst<JoinJobRequest>();
                     if (request != null)
@@ -111,21 +111,21 @@ namespace AvayaMoagentClient
                     break;
                   }
 
-                case _STATUS_ON_JOB_IDLE_NOT_READY:
+                case STATUS_ON_JOB_IDLE_NOT_READY:
                   {
                     _client.Send(AvayaMoagentClient.Commands.NoFurtherWork.Default);
 
                     break;
                   }
 
-                case _STATUS_ON_JOB_UNAVAILABLE:
+                case STATUS_ON_JOB_UNAVAILABLE:
                   {
                     _client.Send(AvayaMoagentClient.Commands.DetachJob.Default);
 
                     break;
                   }
 
-                case _STATUS_NOT_ON_JOB:
+                case STATUS_NOT_ON_JOB:
                   {
                     if (_requestManager.GetFirst<LogoffRequest>() != null)
                     {

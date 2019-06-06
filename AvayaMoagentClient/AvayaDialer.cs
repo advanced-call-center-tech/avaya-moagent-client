@@ -40,13 +40,14 @@ namespace AvayaMoagentClient
   /// </summary>
   public partial class AvayaDialer
   {
-    private const string _CODE_COMPLETE = "M00000";
-    private const string _CODE_ADDITIONAL_DATA = "M00001";
-    private const string _STATUS_ON_JOB_ON_CALL = "S70000";
-    private const string _STATUS_ON_JOB_READY = "S70001";
-    private const string _STATUS_ON_JOB_IDLE_NOT_READY = "S70002";
-    private const string _STATUS_ON_JOB_UNAVAILABLE = "S70003";
-    private const string _STATUS_NOT_ON_JOB = "S70004";
+    public const string STATUS_ON_JOB_ON_CALL = "S70000";
+    public const string STATUS_ON_JOB_READY = "S70001";
+    public const string STATUS_ON_JOB_IDLE_NOT_READY = "S70002";
+    public const string STATUS_ON_JOB_UNAVAILABLE = "S70003";
+    public const string STATUS_NOT_ON_JOB = "S70004";
+    public const string CODE_PENDING = "S28833";
+    public const string CODE_COMPLETE = "M00000";
+    public const string CODE_ADDITIONAL_DATA = "M00001";
     private const string _FIELD_CURPHONE = "CURPHONE";
     private const string _FIELD_DEFAULT_PHONE = "PHONE1";
 
